@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "src/led_npm1300.h"
+#include "led_npm1300.h"
 
 int main(void)
 {
