@@ -25,9 +25,9 @@ enum gpio_npm1300_mode {
 /* nPM1300 GPIO flags */
 #define NPM1300_GPIO_OPEN_DRAIN 1U
 #define NPM1300_GPIO_PULLUP	2U
-#define NPM1300_GPIO_PULLDOWN	3U
-#define NPM1300_GPIO_DRIVE_6MA	4U
-#define NPM1300_GPIO_DEBOUNCE	5U
+#define NPM1300_GPIO_PULLDOWN	4U
+#define NPM1300_GPIO_DRIVE_6MA	8U
+#define NPM1300_GPIO_DEBOUNCE	16U
 
 int gpio_npm1300_config(void *dev, uint8_t pin, enum gpio_npm1300_mode mode, uint32_t flags);
 
