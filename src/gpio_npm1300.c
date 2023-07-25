@@ -31,6 +31,10 @@ int gpio_npm1300_set(void *dev, uint8_t pin, bool state)
 {
 	uint8_t mode = state ? NPM1300_GPIO_GPOLOGIC1 : NPM1300_GPIO_GPOLOGIC0;
 
+	if (pin >= NPM1300_GPIO_PINS) {
+		return -EINVAL;
+	}
+
 	return mfd_npm1300_reg_write(dev, NPM_GPIO_BASE, NPM_GPIO_OFFSET_MODE + pin, mode);
 }
 

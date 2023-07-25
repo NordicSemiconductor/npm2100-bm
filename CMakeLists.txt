@@ -15,6 +15,7 @@ add_executable(npm1300
 	       src/led_npm1300.c
 	       src/mfd_npm1300.c
 	       src/gpio_npm1300.c
+	       src/regulator_npm1300.c
 	       hal/main.c
 	       hal/i2c.c
 )
