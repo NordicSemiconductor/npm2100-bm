@@ -7,30 +7,29 @@
 
 #include "i2c.h"
 
-int i2c_write(void *dev, const uint8_t *buf, uint32_t num_bytes)
+int i2c_reg_write_byte(void *dev, uint8_t reg, uint8_t data)
 {
 	(void)dev;
 
-	printf("W: ");
-	for (int i = 0; i < num_bytes; i++) {
-		printf("%02X ", buf[i]);
-	}
-	printf("\n");
+	printf("W: %02X | %02X\n", reg, data);
 
 	return 0;
 }
 
-int i2c_write_read(void *dev, const void *write_buf, size_t num_write, void *read_buf,
-		   size_t num_read)
+int i2c_reg_read_byte(void *dev, uint8_t reg, uint8_t *data)
 {
 	(void)dev;
-	(void)read_buf;
 
-	printf("W: ");
-	for (int i = 0; i < num_write; i++) {
-		printf("%02X ", ((uint8_t *)write_buf)[i]);
-	}
-	printf("| R: %lu bytes\n", num_read);
+	printf("R: %02X | 1 byte\n", reg);
+
+	return 0;
+}
+
+int i2c_reg_update_byte(void *dev, uint8_t reg, uint8_t mask, uint8_t data)
+{
+	(void)dev;
+
+	printf("U: %02X | %02X | %02X\n", reg, mask, data);
 
 	return 0;
 }

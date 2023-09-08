@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.20.0)
 
-project(npm1300 VERSION 0.1)
+project(npm2100 VERSION 0.1)
 
 include_directories(
         src
@@ -11,12 +11,8 @@ include_directories(
 	lib
 )
 
-add_executable(npm1300
-	       src/led_npm1300.c
-	       src/mfd_npm1300.c
-	       src/gpio_npm1300.c
-	       src/regulator_npm1300.c
-	       src/watchdog_npm1300.c
+add_executable(npm2100
+	       src/regulator_npm2100.c
 	       hal/main.c
 	       hal/i2c.c
 )
