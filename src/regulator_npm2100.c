@@ -12,33 +12,31 @@
 #include "i2c.h"
 #include "regulator_npm2100.h"
 
-#define BOOST_VOUT     0x20U
-#define BOOST_VOUTSEL  0x21U
-#define BOOST_OPER     0x22U
-#define BOOST_GPIO     0x23U
-#define BOOST_PIN      0x24U
-#define BOOST_CTRLSET  0x25U
-#define BOOST_CTRLCLR  0x26U
-#define BOOST_IBATLIM  0x28U
-#define BOOST_VBATMINL 0x29U
-#define BOOST_VBATMINH 0x2AU
-#define BOOST_VOUTMIN  0x2BU
-#define BOOST_VOUTWRN  0x2CU
-#define BOOST_STATUS   0x2DU
+#define BOOST_VOUT     0x21U
+#define BOOST_VOUTSEL  0x22U
+#define BOOST_OPER     0x23U
+#define BOOST_GPIO     0x27U
+#define BOOST_PIN      0x28U
+#define BOOST_CTRLSET  0x29U
+#define BOOST_CTRLCLR  0x2AU
+#define BOOST_IBATLIM  0x2CU
+#define BOOST_VBATMINL 0x2EU
+#define BOOST_VBATMINH 0x2FU
+#define BOOST_VOUTMIN  0x30U
+#define BOOST_VOUTWRN  0x31U
+#define BOOST_STATUS   0x33U
 
-#define LDOSW_LVOUT    0x48U
-#define LDOSW_ENABLE   0x49U
-#define LDOSW_SEL      0x4AU
-#define LDOSW_GPIO     0x4BU
-#define LDOSW_PINACT   0x4CU
-#define LDOSW_PININACT 0x4DU
+#define LDOSW_VOUT   0x64U
+#define LDOSW_ENABLE 0x65U
+#define LDOSW_SEL    0x66U
+#define LDOSW_GPIO   0x67U
 
-#define SHIP_TASK_SHIP 0x90U
+#define SHIP_TASK_SHIP 0xC0U
 
 #define BOOST_OPER_MODE_MASK 0x07U
 #define BOOST_OPER_MODE_AUTO 0x00U
-#define BOOST_OPER_MODE_LP   0x01U
-#define BOOST_OPER_MODE_HP   0x02U
+#define BOOST_OPER_MODE_HP   0x01U
+#define BOOST_OPER_MODE_LP   0x02U
 #define BOOST_OPER_MODE_PASS 0x03U
 #define BOOST_OPER_MODE_NOHP 0x04U
 
@@ -54,17 +52,18 @@
 #define LDOSW_SEL_OPER_HP   0x04U
 #define LDOSW_SEL_OPER_PIN  0x06U
 
-#define LDOSW_PINACT_HP	 0x00U
-#define LDOSW_PINACT_ULP 0x01U
-
-#define LDOSW_PININACT_OFF 0x00U
-#define LDOSW_PININACT_ULP 0x01U
+#define LDOSW_GPIO_PIN_MASK	0x07U
+#define LDOSW_GPIO_PINACT_MASK	0x18U
+#define LDOSW_GPIO_PINACT_HP	0x00U
+#define LDOSW_GPIO_PINACT_ULP	0x08U
+#define LDOSW_GPIO_PININACT_OFF 0x00U
+#define LDOSW_GPIO_PININACT_ULP 0x10U
 
 static const struct linear_range boost_range = LINEAR_RANGE_INIT(1800000, 50000, 0U, 30U);
-static const struct linear_range ldosw_range = LINEAR_RANGE_INIT(800000, 100000, 0U, 22U);
+static const struct linear_range ldosw_range = LINEAR_RANGE_INIT(400000, 50000, 0U, 52U);
 
-int regulator_npm2100_set_voltage(void *dev, enum npm2100_regulator_source source,
-					 int32_t min_uv, int32_t max_uv)
+int regulator_npm2100_set_voltage(void *dev, enum npm2100_regulator_source source, int32_t min_uv,
+				  int32_t max_uv)
 {
 	uint16_t idx;
 	int ret;
@@ -90,7 +89,7 @@ int regulator_npm2100_set_voltage(void *dev, enum npm2100_regulator_source sourc
 			return ret;
 		}
 
-		return i2c_reg_write_byte(dev, LDOSW_LVOUT, idx);
+		return i2c_reg_write_byte(dev, LDOSW_VOUT, idx);
 
 	default:
 		return -ENODEV;
@@ -103,7 +102,7 @@ static int set_boost_mode(void *dev, uint8_t mode)
 	int ret;
 
 	/* Normal mode in lower nibble */
-	switch (mode & 0x0FU) {
+	switch (mode & NPM2100_REG_OPER_MASK) {
 	case NPM2100_REG_OPER_AUTO:
 		reg = BOOST_OPER_MODE_AUTO;
 		break;
@@ -129,7 +128,7 @@ static int set_boost_mode(void *dev, uint8_t mode)
 	}
 
 	/* Forced mode in upper nibble */
-	switch (mode & 0xF0U) {
+	switch (mode & NPM2100_REG_FORCE_MASK) {
 	case 0U:
 		return 0;
 	case NPM2100_REG_FORCE_HP:
@@ -154,47 +153,49 @@ static int set_boost_mode(void *dev, uint8_t mode)
 	return i2c_reg_write_byte(dev, BOOST_PIN, reg);
 }
 
-static int set_ldosw_gpio_mode(void *dev, uint8_t inact, uint8_t act)
+static int set_ldosw_gpio_mode(void *dev, uint8_t inact, uint8_t act, uint8_t ldsw)
 {
 	int ret;
 
-	ret = i2c_reg_write_byte(dev, LDOSW_PININACT, inact);
-	if (ret < 0) {
-		return ret;
-	}
-
-	ret = i2c_reg_write_byte(dev, LDOSW_PINACT, act);
+	ret = i2c_reg_update_byte(dev, LDOSW_GPIO, LDOSW_GPIO_PINACT_MASK, inact | act);
 	if (ret < 0) {
 		return ret;
 	}
 
 	/* Set operating mode to pin control */
-	return i2c_reg_write_byte(dev, LDOSW_SEL, LDOSW_SEL_OPER_PIN);
+	return i2c_reg_write_byte(dev, LDOSW_SEL, LDOSW_SEL_OPER_PIN | ldsw);
 }
 
 static int set_ldosw_mode(void *dev, uint8_t mode)
 {
-	if ((mode & 0xF0U) == 0U) {
+	uint8_t ldsw = mode & NPM2100_REG_LDSW_EN;
+	uint8_t oper = mode & NPM2100_REG_OPER_MASK;
+	uint8_t force = mode & NPM2100_REG_FORCE_MASK;
+
+	if (force == 0U) {
 		/* SW control of mode */
-		switch (mode) {
+		switch (oper) {
 		case NPM2100_REG_OPER_AUTO:
-			return i2c_reg_write_byte(dev, LDOSW_SEL, BOOST_PIN_FORCE_HP);
+			return i2c_reg_write_byte(dev, LDOSW_SEL, LDOSW_SEL_OPER_AUTO | ldsw);
 		case NPM2100_REG_OPER_ULP:
-			return i2c_reg_write_byte(dev, LDOSW_SEL, BOOST_PIN_FORCE_ULP);
+			return i2c_reg_write_byte(dev, LDOSW_SEL, LDOSW_SEL_OPER_ULP | ldsw);
 		case NPM2100_REG_OPER_HP:
-			return i2c_reg_write_byte(dev, LDOSW_SEL, BOOST_PIN_FORCE_LP);
+			return i2c_reg_write_byte(dev, LDOSW_SEL, LDOSW_SEL_OPER_HP | ldsw);
 		default:
 			return -ENOTSUP;
 		}
 	}
 
-	switch (mode) {
+	switch (oper | force) {
 	case NPM2100_REG_OPER_OFF | NPM2100_REG_FORCE_ULP:
-		return set_ldosw_gpio_mode(dev, LDOSW_PININACT_OFF, LDOSW_PINACT_ULP);
+		return set_ldosw_gpio_mode(dev, LDOSW_GPIO_PININACT_OFF, LDOSW_GPIO_PINACT_ULP,
+					   ldsw);
 	case NPM2100_REG_OPER_OFF | NPM2100_REG_FORCE_HP:
-		return set_ldosw_gpio_mode(dev, LDOSW_PININACT_OFF, LDOSW_PINACT_HP);
+		return set_ldosw_gpio_mode(dev, LDOSW_GPIO_PININACT_OFF, LDOSW_GPIO_PINACT_HP,
+					   ldsw);
 	case NPM2100_REG_OPER_ULP | NPM2100_REG_FORCE_HP:
-		return set_ldosw_gpio_mode(dev, LDOSW_PININACT_ULP, LDOSW_PINACT_HP);
+		return set_ldosw_gpio_mode(dev, LDOSW_GPIO_PININACT_ULP, LDOSW_GPIO_PINACT_HP,
+					   ldsw);
 	default:
 		return -ENOTSUP;
 	}
@@ -208,7 +209,7 @@ int regulator_npm2100_set_mode(void *dev, enum npm2100_regulator_source source, 
 	case NPM2100_SOURCE_LDOSW:
 		return set_ldosw_mode(dev, mode);
 	default:
-		return -ENOTSUP;
+		return -ENODEV;
 	}
 }
 
@@ -228,6 +229,22 @@ int regulator_npm2100_disable(void *dev, enum npm2100_regulator_source source)
 	}
 
 	return i2c_reg_write_byte(dev, LDOSW_ENABLE, 0U);
+}
+
+int regulator_npm2100_pin_ctrl(void *dev, enum npm2100_regulator_source source, uint8_t gpio_pin,
+			       bool active_low)
+{
+	uint8_t pin = gpio_pin << 1U;
+	uint8_t offset = active_low ? 0U : 1U;
+
+	switch (source) {
+	case NPM2100_SOURCE_BOOST:
+		return i2c_reg_write_byte(dev, BOOST_GPIO, pin + offset + 1U);
+	case NPM2100_SOURCE_LDOSW:
+		return i2c_reg_update_byte(dev, LDOSW_GPIO, LDOSW_GPIO_PIN_MASK, pin + offset);
+	default:
+		return -ENODEV;
+	}
 }
 
 int regulator_npm2100_ship_mode(void *dev)
