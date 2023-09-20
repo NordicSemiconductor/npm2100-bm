@@ -16,7 +16,7 @@ enum npm2100_regulator_source {
 };
 
 /* Load switch selection */
-#define NPM2100_REG_LDSW_EN   0x01U
+#define NPM2100_REG_LDSW_EN 0x01U
 
 /* Operating mode */
 #define NPM2100_REG_OPER_MASK 0x0EU

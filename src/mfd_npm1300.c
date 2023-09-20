@@ -17,7 +17,7 @@
 #define TIME_OFFSET_TIMER 0x08U
 
 #define TIMER_PRESCALER_MS 16U
-#define TIMER_MAX          0xFFFFFFU
+#define TIMER_MAX	   0xFFFFFFU
 
 int mfd_npm1300_reg_read_burst(void *dev, uint8_t base, uint8_t offset, void *data, size_t len)
 {

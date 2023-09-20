@@ -8,8 +8,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "linear_range.h"
 #include "i2c.h"
+#include "linear_range.h"
 #include "regulator_npm2100.h"
 
 #define BOOST_VOUT     0x21U

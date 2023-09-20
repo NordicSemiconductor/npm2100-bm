@@ -30,7 +30,7 @@
  *
  * @return The result of @p n / @p d, rounded up.
  */
-#define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
+#define DIV_ROUND_UP(n, d) (((n) + (d)-1) / (d))
 
 /**
  * @brief Divide and round to the nearest integer.
@@ -47,8 +47,7 @@
  *
  * @return The result of @p n / @p d, rounded to the nearest integer.
  */
-#define DIV_ROUND_CLOSEST(n, d)	\
-	((((n) < 0) ^ ((d) < 0)) ? ((n) - ((d) / 2)) / (d) : \
-	((n) + ((d) / 2)) / (d))
+#define DIV_ROUND_CLOSEST(n, d)                                                                    \
+	((((n) < 0) ^ ((d) < 0)) ? ((n) - ((d) / 2)) / (d) : ((n) + ((d) / 2)) / (d))
 
 #endif /* LIB_UTIL_H_ */

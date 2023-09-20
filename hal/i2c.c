@@ -22,6 +22,8 @@ int i2c_reg_read_byte(void *dev, uint8_t reg, uint8_t *data)
 
 	printf("R: %02X | 1 byte\n", reg);
 
+	*data = 0U;
+
 	return 0;
 }
 
