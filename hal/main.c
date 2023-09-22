@@ -8,7 +8,7 @@
 #include <unistd.h>
 
 #include "regulator_npm2100.h"
-// #include "led_npm1300.h"
+#include "gpio_npm2100.h"
 
 int main(void)
 {
@@ -18,13 +18,14 @@ int main(void)
 	regulator_npm2100_set_voltage(dev, NPM2100_SOURCE_BOOST, 2000000, 2000000);
 	regulator_npm2100_set_voltage(dev, NPM2100_SOURCE_LDOSW, 2000000, 2000000);
 
-	// puts("Initialising LEDs");
-	// led_npm1300_init(dev, 0, NPM_LED_MODE_ERROR);
-	// led_npm1300_init(dev, 1, NPM_LED_MODE_CHARGING);
-	// led_npm1300_init(dev, 2, NPM_LED_MODE_HOST);
+	puts("Initialising GPIOs");
+	gpio_npm2100_config(dev, 0, NPM2100_GPIO_CONFIG_INPUT | NPM2100_GPIO_CONFIG_PULLUP);
+	gpio_npm2100_config(dev, 1, NPM2100_GPIO_CONFIG_OUTPUT);
 
 	while (true) {
-		// led_npm1300_on(dev, 2);
+		gpio_npm2100_set(dev, 1, true);
+		sleep(1);
+		gpio_npm2100_set(dev, 1, false);
 		sleep(1);
 	}
 }

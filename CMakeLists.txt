@@ -13,6 +13,7 @@ include_directories(
 
 add_executable(npm2100
 	       src/regulator_npm2100.c
+	       src/gpio_npm2100.c
 	       hal/main.c
 	       hal/i2c.c
 )
