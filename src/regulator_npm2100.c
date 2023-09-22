@@ -1,4 +1,6 @@
-/*
+/** @file
+ */
+/** @file
  * Copyright (c) 2023 Nordic Semiconductor ASA
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -24,7 +26,10 @@
 #define BOOST_VBATMINH 0x2FU
 #define BOOST_VOUTMIN  0x30U
 #define BOOST_VOUTWRN  0x31U
-#define BOOST_STATUS   0x33U
+#define BOOST_STATUS0  0x33U
+#define BOOST_STATUS1  0x34U
+#define BOOST_VSET0    0x35U
+#define BOOST_VSET1    0x36U
 
 #define LDOSW_VOUT   0x64U
 #define LDOSW_ENABLE 0x65U
@@ -46,6 +51,8 @@
 #define BOOST_PIN_FORCE_PASS 0x03U
 #define BOOST_PIN_FORCE_NOHP 0x04U
 
+#define BOOST_STATUS1_VSET_MASK 0x40U
+
 #define LDOSW_SEL_OPER_MASK 0x06U
 #define LDOSW_SEL_OPER_AUTO 0x00U
 #define LDOSW_SEL_OPER_ULP  0x02U
@@ -61,6 +68,10 @@
 
 static const struct linear_range boost_range = LINEAR_RANGE_INIT(1800000, 50000, 0U, 30U);
 static const struct linear_range ldosw_range = LINEAR_RANGE_INIT(400000, 50000, 0U, 52U);
+static const struct linear_range vset0_range = LINEAR_RANGE_INIT(1800000, 100000, 0U, 6U);
+static const struct linear_range vset1_ranges[] = {LINEAR_RANGE_INIT(3000000, 0, 0U, 0U),
+						   LINEAR_RANGE_INIT(2700000, 100000, 1U, 3U),
+						   LINEAR_RANGE_INIT(3100000, 100000, 4U, 6U)};
 
 int regulator_npm2100_set_voltage(void *dev, enum npm2100_regulator_source source, int32_t min_uv,
 				  int32_t max_uv)
@@ -90,6 +101,66 @@ int regulator_npm2100_set_voltage(void *dev, enum npm2100_regulator_source sourc
 		}
 
 		return i2c_reg_write_byte(dev, LDOSW_VOUT, idx);
+
+	default:
+		return -ENODEV;
+	}
+}
+
+int regulator_npm2100_get_voltage(void *dev, enum npm2100_regulator_source source, int32_t *volt_uv)
+{
+	uint8_t idx;
+	int ret;
+
+	switch (source) {
+	case NPM2100_SOURCE_BOOST:
+		ret = i2c_reg_read_byte(dev, BOOST_VOUTSEL, &idx);
+		if (ret < 0) {
+			return ret;
+		}
+
+		if (idx == 1U) {
+			/* Voltage is selected by register value */
+			ret = i2c_reg_read_byte(dev, BOOST_VOUT, &idx);
+			if (ret < 0) {
+				return ret;
+			}
+
+			return linear_range_get_value(&boost_range, idx, volt_uv);
+		}
+
+		/* Voltage is selected by VSET pin */
+		ret = i2c_reg_read_byte(dev, BOOST_STATUS1, &idx);
+		if (ret < 0) {
+			return ret;
+		}
+
+		if ((idx & BOOST_STATUS1_VSET_MASK) == 0U) {
+			/* VSET low, voltage is selected by VSET0 register */
+			ret = i2c_reg_read_byte(dev, BOOST_VSET0, &idx);
+			if (ret < 0) {
+				return ret;
+			}
+
+			return linear_range_get_value(&vset0_range, idx, volt_uv);
+		}
+
+		/* VSET high, voltage is selected by VSET1 register */
+		ret = i2c_reg_read_byte(dev, BOOST_VSET1, &idx);
+		if (ret < 0) {
+			return ret;
+		}
+
+		return linear_range_group_get_value(vset1_ranges, ARRAY_SIZE(vset1_ranges), idx,
+						    volt_uv);
+
+	case NPM2100_SOURCE_LDOSW:
+		ret = i2c_reg_read_byte(dev, LDOSW_VOUT, &idx);
+		if (ret < 0) {
+			return ret;
+		}
+
+		return linear_range_get_value(&ldosw_range, idx, volt_uv);
 
 	default:
 		return -ENODEV;

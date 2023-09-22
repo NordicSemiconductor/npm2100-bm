@@ -1,4 +1,4 @@
-/*
+/** @file
  * Copyright (c) 2011-2014, Wind River Systems, Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -49,5 +49,16 @@
  */
 #define DIV_ROUND_CLOSEST(n, d)                                                                    \
 	((((n) < 0) ^ ((d) < 0)) ? ((n) - ((d) / 2)) / (d) : ((n) + ((d) / 2)) / (d))
+
+/**
+ * @brief Number of elements in the given @p array
+ *
+ * In C++, due to language limitations, this will accept as @p array
+ * any type that implements <tt>operator[]</tt>. The results may not be
+ * particularly meaningful in this case.
+ *
+ * In C, passing a pointer as @p array causes a compile error.
+ */
+#define ARRAY_SIZE(array) ((size_t)((sizeof(array) / sizeof((array)[0]))))
 
 #endif /* LIB_UTIL_H_ */
