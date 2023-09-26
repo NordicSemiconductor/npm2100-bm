@@ -35,3 +35,18 @@ int i2c_reg_update_byte(void *dev, uint8_t reg, uint8_t mask, uint8_t data)
 
 	return 0;
 }
+
+int i2c_write(void *dev, uint8_t *buf, size_t len)
+{
+	(void)dev;
+
+	printf("W: %02X |", buf[0]);
+
+	for (size_t idx = 1U; idx < len; idx++) {
+		printf(" %02X", buf[idx]);
+	}
+
+	printf("\n");
+
+	return 0;
+}

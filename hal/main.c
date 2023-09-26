@@ -7,8 +7,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "regulator_npm2100.h"
 #include "gpio_npm2100.h"
+#include "regulator_npm2100.h"
+#include "watchdog_npm2100.h"
 
 int main(void)
 {
@@ -22,10 +23,14 @@ int main(void)
 	gpio_npm2100_config(dev, 0, NPM2100_GPIO_CONFIG_INPUT | NPM2100_GPIO_CONFIG_PULLUP);
 	gpio_npm2100_config(dev, 1, NPM2100_GPIO_CONFIG_OUTPUT);
 
+	puts("Initialising Watchdog");
+	watchdog_npm2100_init(dev, 5000, NPM2100_WATCHDOG_RESET_PIN);
+
 	while (true) {
 		gpio_npm2100_set(dev, 1, true);
 		sleep(1);
 		gpio_npm2100_set(dev, 1, false);
 		sleep(1);
+		watchdog_npm2100_feed(dev);
 	}
 }

@@ -11,3 +11,5 @@ int i2c_reg_write_byte(void *dev, uint8_t reg, uint8_t data);
 int i2c_reg_read_byte(void *dev, uint8_t reg, uint8_t *data);
 
 int i2c_reg_update_byte(void *dev, uint8_t reg, uint8_t mask, uint8_t data);
+
+int i2c_write(void *dev, uint8_t *buf, size_t len);
