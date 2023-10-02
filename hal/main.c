@@ -1,4 +1,4 @@
-/*
+/** @file
  * Copyright (c) 2023 Nordic Semiconductor ASA
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -7,30 +7,31 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "i2c.h"
 #include "gpio_npm2100.h"
 #include "regulator_npm2100.h"
 #include "watchdog_npm2100.h"
 
 int main(void)
 {
-	void *dev = NULL;
+	struct i2c_dev dev = {.addr = 0x74U};
 
-	puts("Initialising BUCKs");
-	regulator_npm2100_set_voltage(dev, NPM2100_SOURCE_BOOST, 2000000, 2000000);
-	regulator_npm2100_set_voltage(dev, NPM2100_SOURCE_LDOSW, 2000000, 2000000);
+	puts("Initialising regulators");
+	regulator_npm2100_set_voltage(&dev, NPM2100_SOURCE_BOOST, 2000000, 2000000);
+	regulator_npm2100_set_voltage(&dev, NPM2100_SOURCE_LDOSW, 2000000, 2000000);
 
 	puts("Initialising GPIOs");
-	gpio_npm2100_config(dev, 0, NPM2100_GPIO_CONFIG_INPUT | NPM2100_GPIO_CONFIG_PULLUP);
-	gpio_npm2100_config(dev, 1, NPM2100_GPIO_CONFIG_OUTPUT);
+	gpio_npm2100_config(&dev, 0, NPM2100_GPIO_CONFIG_INPUT | NPM2100_GPIO_CONFIG_PULLUP);
+	gpio_npm2100_config(&dev, 1, NPM2100_GPIO_CONFIG_OUTPUT);
 
 	puts("Initialising Watchdog");
-	watchdog_npm2100_init(dev, 5000, NPM2100_WATCHDOG_RESET_PIN);
+	watchdog_npm2100_init(&dev, 5000, NPM2100_WATCHDOG_RESET_PIN);
 
 	while (true) {
-		gpio_npm2100_set(dev, 1, true);
+		gpio_npm2100_set(&dev, 1, true);
 		sleep(1);
-		gpio_npm2100_set(dev, 1, false);
+		gpio_npm2100_set(&dev, 1, false);
 		sleep(1);
-		watchdog_npm2100_feed(dev);
+		watchdog_npm2100_feed(&dev);
 	}
 }
