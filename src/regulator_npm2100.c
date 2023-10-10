@@ -12,22 +12,22 @@
 #include "linear_range.h"
 #include "regulator_npm2100.h"
 
-#define BOOST_VOUT     0x21U
-#define BOOST_VOUTSEL  0x22U
-#define BOOST_OPER     0x23U
-#define BOOST_GPIO     0x27U
-#define BOOST_PIN      0x28U
-#define BOOST_CTRLSET  0x29U
-#define BOOST_CTRLCLR  0x2AU
-#define BOOST_IBATLIM  0x2CU
-#define BOOST_VBATMINL 0x2EU
-#define BOOST_VBATMINH 0x2FU
-#define BOOST_VOUTMIN  0x30U
-#define BOOST_VOUTWRN  0x31U
-#define BOOST_STATUS0  0x33U
-#define BOOST_STATUS1  0x34U
-#define BOOST_VSET0    0x35U
-#define BOOST_VSET1    0x36U
+#define BOOST_VOUT     0x22U
+#define BOOST_VOUTSEL  0x23U
+#define BOOST_OPER     0x24U
+#define BOOST_GPIO     0x28U
+#define BOOST_PIN      0x29U
+#define BOOST_CTRLSET  0x2AU
+#define BOOST_CTRLCLR  0x2BU
+#define BOOST_IBATLIM  0x2DU
+#define BOOST_VBATMINL 0x2FU
+#define BOOST_VBATMINH 0x30U
+#define BOOST_VOUTMIN  0x31U
+#define BOOST_VOUTWRN  0x32U
+#define BOOST_STATUS0  0x34U
+#define BOOST_STATUS1  0x35U
+#define BOOST_VSET0    0x36U
+#define BOOST_VSET1    0x37U
 
 #define LDOSW_VOUT   0x64U
 #define LDOSW_ENABLE 0x65U
