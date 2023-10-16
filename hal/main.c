@@ -21,8 +21,9 @@ int main(void)
 	regulator_npm2100_set_voltage(&dev, NPM2100_SOURCE_LDOSW, 2000000, 2000000);
 
 	puts("Initialising GPIOs");
-	gpio_npm2100_config(&dev, 0, NPM2100_GPIO_CONFIG_INPUT | NPM2100_GPIO_CONFIG_PULLUP);
-	gpio_npm2100_config(&dev, 1, NPM2100_GPIO_CONFIG_OUTPUT);
+	gpio_npm2100_config(&dev, 0, NPM2100_GPIO_MODE_GPIO,
+			    NPM2100_GPIO_CONFIG_INPUT | NPM2100_GPIO_CONFIG_PULLUP);
+	gpio_npm2100_config(&dev, 1, NPM2100_GPIO_MODE_GPIO, NPM2100_GPIO_CONFIG_OUTPUT);
 
 	puts("Initialising Watchdog");
 	watchdog_npm2100_init(&dev, 5000, NPM2100_WATCHDOG_RESET_PIN);

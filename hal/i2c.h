@@ -23,6 +23,18 @@ struct i2c_dev {
 int i2c_write(void *dev, uint8_t *buf, size_t len);
 
 /**
+ * @brief Write / read transaction with I2C peripheral
+ *
+ * @param dev i2c device.
+ * @param reg first register to read.
+ * @param buf buffer for read data.
+ * @param len Number of bytes to read.
+ *
+ * @return 0 If successful, -errno In case of error
+ */
+int i2c_read(void *dev, uint8_t reg, uint8_t *buf, size_t len);
+
+/**
  * @brief Write byte to I2C peripheral
  *
  * @param dev i2c device.

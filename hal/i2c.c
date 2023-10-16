@@ -42,3 +42,12 @@ int i2c_write(void *dev, uint8_t *buf, size_t len)
 
 	return 0;
 }
+
+int i2c_read(void *dev, uint8_t reg, uint8_t *buf, size_t len)
+{
+	printf("R: %02X | %02X - %ld bytes\n", ((struct i2c_dev *)dev)->addr, reg, len);
+
+	buf[0] = 0U;
+
+	return 0;
+}
