@@ -44,10 +44,15 @@ int gpio_npm2100_get(void *dev, uint8_t pin, bool *state)
 	return 0;
 }
 
-int gpio_npm2100_config(void *dev, uint8_t pin, uint8_t flags)
+int gpio_npm2100_config(void *dev, uint8_t pin, uint8_t mode, uint8_t flags)
 {
 	if (pin >= NPM2100_GPIO_PINS) {
 		return -EINVAL;
+	}
+
+	int ret = i2c_reg_write_byte(dev, NPM2100_GPIO_USAGE + pin, mode);
+	if (ret < 0) {
+		return ret;
 	}
 
 	return i2c_reg_write_byte(dev, NPM2100_GPIO_CONFIG + pin, flags);

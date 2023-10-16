@@ -8,7 +8,12 @@
 
 #include <stdint.h>
 
-/* nPM2100 GPIO mode flags */
+/* nPM2100 GPIO modes */
+#define NPM2100_GPIO_MODE_GPIO	   0x00U
+#define NPM2100_GPIO_MODE_IRQ_LOW  0x01U
+#define NPM2100_GPIO_MODE_IRQ_HIGH 0x02U
+
+/* nPM2100 GPIO flags */
 #define NPM2100_GPIO_CONFIG_INPUT     0x01U
 #define NPM2100_GPIO_CONFIG_OUTPUT    0x02U
 #define NPM2100_GPIO_CONFIG_OPENDRAIN 0x04U
@@ -21,15 +26,17 @@
  * @brief Configure GPIO pin.
  *
  * Configure GPIO pin.
+ * Pin mode should be one of NPM2100_GPIO_MODE_ defines.
  * Pin flags should be ORed list of NPM2100_GPIO_CONFIG_ defines.
  *
  * @param dev device pointer, passed to i2c hal layer.
  * @param pin pin to configure.
+ * @param mode Configuration mode.
  * @param flags Configuration flags.
  *
  * @return 0 If successful, -errno In case of error
  */
-int gpio_npm2100_config(void *dev, uint8_t pin, uint8_t flags);
+int gpio_npm2100_config(void *dev, uint8_t pin, uint8_t mode, uint8_t flags);
 
 /**
  * @brief Set GPIO pin state.
