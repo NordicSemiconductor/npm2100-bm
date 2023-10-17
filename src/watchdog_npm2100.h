@@ -16,7 +16,7 @@ enum watchdog_npm2100_mode {
 };
 
 /**
- * @brief Disable watchdog
+ * @brief Disable watchdog and boot monitor
  *
  * @param dev device pointer, passed to i2c hal layer.
  * @return 0 If successful, -errno In case of any bus error

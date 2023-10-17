@@ -16,6 +16,9 @@ int main(void)
 {
 	struct i2c_dev dev = {.addr = 0x74U};
 
+	puts("Disabling boot monitor");
+	watchdog_npm2100_disable(&dev);
+
 	puts("Initialising regulators");
 	regulator_npm2100_set_voltage(&dev, NPM2100_SOURCE_BOOST, 2000000, 2000000);
 	regulator_npm2100_set_voltage(&dev, NPM2100_SOURCE_LDOSW, 2000000, 2000000);
