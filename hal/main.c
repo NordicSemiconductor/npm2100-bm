@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "i2c.h"
+#include "adc_npm2100.h"
 #include "gpio_npm2100.h"
 #include "regulator_npm2100.h"
 #include "watchdog_npm2100.h"
@@ -33,9 +34,18 @@ int main(void)
 
 	while (true) {
 		gpio_npm2100_set(&dev, 1, true);
+		adc_npm2100_take_reading(&dev, NPM2100_ADC_VBAT);
 		sleep(1);
+
 		gpio_npm2100_set(&dev, 1, false);
+		adc_npm2100_take_reading(&dev, NPM2100_ADC_DIETEMP);
 		sleep(1);
+
+		int32_t vbat;
+		int32_t dietemp;
+		adc_npm2100_get_result(&dev, NPM2100_ADC_VBAT, &vbat);
+		adc_npm2100_get_result(&dev, NPM2100_ADC_DIETEMP, &dietemp);
+
 		watchdog_npm2100_feed(&dev);
 	}
 }
