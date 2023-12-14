@@ -15,7 +15,7 @@
 
 int main(void)
 {
-	struct i2c_dev dev = {.addr = 0x74U};
+	struct i2c_dev dev = {.addr = 0x74U, .mem = (uint8_t[0x100]){}};
 
 	puts("Disabling boot monitor");
 	watchdog_npm2100_disable(&dev);

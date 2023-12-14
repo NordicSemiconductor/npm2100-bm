@@ -9,6 +9,7 @@
 /** Anonymous i2c device structure */
 struct i2c_dev {
 	uint8_t addr; /* I2C device address */
+	uint8_t *mem; /* Register data buffer */
 };
 
 /**
