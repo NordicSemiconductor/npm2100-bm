@@ -45,7 +45,6 @@
 
 #define BOOST_PIN_FORCE_HP   0x00U
 #define BOOST_PIN_FORCE_LP   0x01U
-#define BOOST_PIN_FORCE_ULP  0x02U
 #define BOOST_PIN_FORCE_PASS 0x03U
 #define BOOST_PIN_FORCE_NOHP 0x04U
 
@@ -205,9 +204,6 @@ static int set_boost_mode(void *dev, uint8_t mode)
 		break;
 	case NPM2100_REG_FORCE_LP:
 		reg = BOOST_PIN_FORCE_LP;
-		break;
-	case NPM2100_REG_FORCE_ULP:
-		reg = BOOST_PIN_FORCE_ULP;
 		break;
 	case NPM2100_REG_FORCE_PASS:
 		reg = BOOST_PIN_FORCE_PASS;
