@@ -10,7 +10,14 @@
 
 #include "adc_npm2100.h"
 #include "i2c.h"
+#include "linear_range.h"
 #include "util.h"
+
+#define BOOST_VBATMINL 0x2FU
+#define BOOST_VBATMINH 0x30U
+#define BOOST_VOUTMIN  0x31U
+#define BOOST_VOUTWRN  0x32U
+#define BOOST_VOUTDPS  0x33U
 
 #define ADC_TASKS_START 0x90U
 #define ADC_CONFIG	0X91U
@@ -30,11 +37,28 @@ struct adc_config_t {
 	int32_t offset;
 };
 
+struct adc_attr_t {
+	const struct linear_range *range;
+	uint8_t reg;
+};
+
 static const struct adc_config_t adc_config[] = {
 	[NPM2100_ADC_VBAT] = {CONFIG_MODE_INS_VBAT, 3200000, 256, 0},
 	[NPM2100_ADC_DIETEMP] = {CONFIG_MODE_TEMP, -2120000, 1, 389500000},
 	[NPM2100_ADC_DROOP] = {CONFIG_MODE_DROOP, 1500000, 256, 1800000},
 	[NPM2100_ADC_VOUT] = {CONFIG_MODE_VOUT, 1500000, 256, 1800000},
+};
+
+static const struct linear_range vbat_range = LINEAR_RANGE_INIT(700000, 50000, 0U, 46U);
+static const struct linear_range vout_range = LINEAR_RANGE_INIT(1700000, 50000, 0U, 31U);
+static const struct linear_range vdps_range = LINEAR_RANGE_INIT(1800000, 50000, 0U, 31U);
+
+static const struct adc_attr_t adc_attr[] = {
+	[NPM2100_ADC_VBATMINH] = {&vbat_range, BOOST_VBATMINH},
+	[NPM2100_ADC_VBATMINL] = {&vbat_range, BOOST_VBATMINL},
+	[NPM2100_ADC_VOUTDPS] = {&vdps_range, BOOST_VOUTDPS},
+	[NPM2100_ADC_VOUTMIN] = {&vout_range, BOOST_VOUTMIN},
+	[NPM2100_ADC_VOUTWRN] = {&vout_range, BOOST_VOUTWRN},
 };
 
 int adc_npm2100_take_reading(void *dev, enum npm2100_adc_chan chan)
@@ -70,4 +94,36 @@ int adc_npm2100_get_result(void *dev, enum npm2100_adc_chan chan, int32_t *value
 		 (((int32_t)data * adc_config[chan].mul) / adc_config[chan].div);
 
 	return 0;
+}
+
+int adc_npm2100_attr_get(void *dev, enum npm2100_adc_attr attr, int32_t *value)
+{
+	if (attr >= ARRAY_SIZE(adc_attr)) {
+		return -ENODEV;
+	}
+
+	uint8_t data;
+	int ret = i2c_reg_read_byte(dev, adc_attr[attr].reg, &data);
+
+	if (ret < 0) {
+		return ret;
+	}
+
+	return linear_range_get_value(adc_attr[attr].range, data, value);
+}
+
+int adc_npm2100_attr_set(void *dev, enum npm2100_adc_attr attr, int32_t value)
+{
+	if (attr >= ARRAY_SIZE(adc_attr)) {
+		return -ENODEV;
+	}
+
+	uint16_t data;
+	int ret = linear_range_get_index(adc_attr[attr].range, value, &data);
+
+	if (ret < 0) {
+		return ret;
+	}
+
+	return i2c_reg_write_byte(dev, adc_attr[attr].reg, data);
 }

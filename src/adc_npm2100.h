@@ -16,6 +16,15 @@ enum npm2100_adc_chan {
 	NPM2100_ADC_VOUT = 3,
 };
 
+/* nPM2100 adc attributes */
+enum npm2100_adc_attr {
+	NPM2100_ADC_VBATMINH,
+	NPM2100_ADC_VBATMINL,
+	NPM2100_ADC_VOUTDPS,
+	NPM2100_ADC_VOUTMIN,
+	NPM2100_ADC_VOUTWRN,
+};
+
 /**
  * @brief Trigger reading of ADC channel
  *
@@ -44,5 +53,27 @@ int adc_npm2100_take_reading(void *dev, enum npm2100_adc_chan chan);
  * @return 0 If successful, -ENODEV If the channel is invalid, -errno In case of bus error
  */
 int adc_npm2100_get_result(void *dev, enum npm2100_adc_chan chan, int32_t *value);
+
+/**
+ * @brief Get ADC attribute
+ *
+ * @param dev device pointer, passed to i2c hal layer.
+ * @param attr adc attribute.
+ * @param value Result value, in micro units.
+ *
+ * @return 0 If successful, -ENODEV If the channel is invalid, -errno In case of bus error
+ */
+int adc_npm2100_attr_get(void *dev, enum npm2100_adc_attr attr, int32_t *value);
+
+/**
+ * @brief Set ADC attribute
+ *
+ * @param dev device pointer, passed to i2c hal layer.
+ * @param attr adc attribute.
+ * @param value Value to set, in micro units.
+ *
+ * @return 0 If successful, -ENODEV If the channel is invalid, -errno In case of bus error
+ */
+int adc_npm2100_attr_set(void *dev, enum npm2100_adc_attr attr, int32_t value);
 
 #endif /* ADC_NPM2100_H_*/
