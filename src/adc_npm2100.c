@@ -13,6 +13,8 @@
 #include "linear_range.h"
 #include "util.h"
 
+#define BOOST_DPSCOUNT 0x25U
+#define BOOST_DPSLIMIT 0x26U
 #define BOOST_VBATMINL 0x2FU
 #define BOOST_VBATMINH 0x30U
 #define BOOST_VOUTMIN  0x31U
@@ -52,6 +54,7 @@ static const struct adc_config_t adc_config[] = {
 static const struct linear_range vbat_range = LINEAR_RANGE_INIT(700000, 50000, 0U, 46U);
 static const struct linear_range vout_range = LINEAR_RANGE_INIT(1700000, 50000, 0U, 31U);
 static const struct linear_range vdps_range = LINEAR_RANGE_INIT(1800000, 50000, 0U, 31U);
+static const struct linear_range dpslim_range = LINEAR_RANGE_INIT(3, 1, 3U, 255U);
 
 static const struct adc_attr_t adc_attr[] = {
 	[NPM2100_ADC_VBATMINH] = {&vbat_range, BOOST_VBATMINH},
@@ -59,41 +62,65 @@ static const struct adc_attr_t adc_attr[] = {
 	[NPM2100_ADC_VOUTDPS] = {&vdps_range, BOOST_VOUTDPS},
 	[NPM2100_ADC_VOUTMIN] = {&vout_range, BOOST_VOUTMIN},
 	[NPM2100_ADC_VOUTWRN] = {&vout_range, BOOST_VOUTWRN},
+	[NPM2100_ADC_DPSLIMIT] = {&dpslim_range, BOOST_DPSLIMIT},
 };
 
 int adc_npm2100_take_reading(void *dev, enum npm2100_adc_chan chan)
 {
-	if (chan >= ARRAY_SIZE(adc_config)) {
+	int ret;
+
+	switch (chan) {
+	case NPM2100_ADC_VBAT:
+	case NPM2100_ADC_DIETEMP:
+	case NPM2100_ADC_DROOP:
+	case NPM2100_ADC_VOUT:
+		ret = i2c_reg_write_byte(dev, ADC_CONFIG, adc_config[chan].mode);
+		if (ret < 0) {
+			return ret;
+		}
+		return i2c_reg_write_byte(dev, ADC_TASKS_START, 1U);
+
+	case NPM2100_ADC_DPSCOUNT:
+		return 0;
+
+	default:
 		return -ENODEV;
 	}
-
-	int ret = i2c_reg_write_byte(dev, ADC_CONFIG, adc_config[chan].mode);
-
-	if (ret < 0) {
-		return ret;
-	}
-
-	return i2c_reg_write_byte(dev, ADC_TASKS_START, 1U);
 }
 
 int adc_npm2100_get_result(void *dev, enum npm2100_adc_chan chan, int32_t *value)
 {
-	if (chan >= ARRAY_SIZE(adc_config)) {
+	uint8_t data;
+	int ret;
+
+	switch (chan) {
+	case NPM2100_ADC_VBAT:
+	case NPM2100_ADC_DIETEMP:
+	case NPM2100_ADC_DROOP:
+	case NPM2100_ADC_VOUT:
+		ret = i2c_reg_read_byte(dev, ADC_RESULTS + chan, &data);
+		if (ret < 0) {
+			return ret;
+		}
+
+		*value = adc_config[chan].offset +
+			 (((int32_t)data * adc_config[chan].mul) / adc_config[chan].div);
+
+		return 0;
+
+	case NPM2100_ADC_DPSCOUNT:
+		ret = i2c_reg_read_byte(dev, BOOST_DPSCOUNT, &data);
+		if (ret < 0) {
+			return ret;
+		}
+
+		*value = data;
+
+		return 0;
+
+	default:
 		return -ENODEV;
 	}
-
-	uint8_t data;
-
-	int ret = i2c_reg_read_byte(dev, ADC_RESULTS + chan, &data);
-
-	if (ret < 0) {
-		return ret;
-	}
-
-	*value = adc_config[chan].offset +
-		 (((int32_t)data * adc_config[chan].mul) / adc_config[chan].div);
-
-	return 0;
 }
 
 int adc_npm2100_attr_get(void *dev, enum npm2100_adc_attr attr, int32_t *value)

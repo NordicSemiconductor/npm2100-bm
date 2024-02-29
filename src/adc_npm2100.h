@@ -14,6 +14,7 @@ enum npm2100_adc_chan {
 	NPM2100_ADC_DIETEMP = 1,
 	NPM2100_ADC_DROOP = 2,
 	NPM2100_ADC_VOUT = 3,
+	NPM2100_ADC_DPSCOUNT = 4
 };
 
 /* nPM2100 adc attributes */
@@ -23,6 +24,7 @@ enum npm2100_adc_attr {
 	NPM2100_ADC_VOUTDPS,
 	NPM2100_ADC_VOUTMIN,
 	NPM2100_ADC_VOUTWRN,
+	NPM2100_ADC_DPSLIMIT,
 };
 
 /**
