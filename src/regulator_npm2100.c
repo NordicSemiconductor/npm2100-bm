@@ -64,7 +64,7 @@
 #define LDOSW_GPIO_PININACT_ULP 0x10U
 
 static const struct linear_range boost_range = LINEAR_RANGE_INIT(1800000, 50000, 0U, 30U);
-static const struct linear_range ldosw_range = LINEAR_RANGE_INIT(400000, 50000, 0U, 52U);
+static const struct linear_range ldosw_range = LINEAR_RANGE_INIT(800000, 50000, 8U, 52U);
 static const struct linear_range vset0_range = LINEAR_RANGE_INIT(1800000, 100000, 0U, 6U);
 static const struct linear_range vset1_ranges[] = {LINEAR_RANGE_INIT(3000000, 0, 0U, 0U),
 						   LINEAR_RANGE_INIT(2700000, 100000, 1U, 3U),
