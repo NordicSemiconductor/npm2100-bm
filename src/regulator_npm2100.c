@@ -48,6 +48,9 @@
 #define BOOST_PIN_FORCE_PASS 0x03U
 #define BOOST_PIN_FORCE_NOHP 0x04U
 
+#define BOOST_OPER_DPS_MASK  0x700U
+#define BOOST_OPER_DPS_SHIFT 5U
+
 #define BOOST_STATUS1_VSET_MASK 0x40U
 
 #define LDOSW_SEL_OPER_MASK 0x06U
@@ -164,7 +167,7 @@ int regulator_npm2100_get_voltage(void *dev, enum npm2100_regulator_source sourc
 	}
 }
 
-static int set_boost_mode(void *dev, uint8_t mode)
+static int set_boost_mode(void *dev, uint16_t mode)
 {
 	uint8_t reg;
 	int ret;
@@ -190,7 +193,10 @@ static int set_boost_mode(void *dev, uint8_t mode)
 		return -ENOTSUP;
 	}
 
-	ret = i2c_reg_update_byte(dev, BOOST_OPER, BOOST_OPER_MODE_MASK, reg);
+	/* Configure DPS mode and timer */
+	reg |= (mode & BOOST_OPER_DPS_MASK) >> BOOST_OPER_DPS_SHIFT;
+
+	ret = i2c_reg_write_byte(dev, BOOST_OPER, reg);
 	if (ret < 0) {
 		return ret;
 	}
@@ -266,7 +272,7 @@ static int set_ldosw_mode(void *dev, uint8_t mode)
 	}
 }
 
-int regulator_npm2100_set_mode(void *dev, enum npm2100_regulator_source source, uint8_t mode)
+int regulator_npm2100_set_mode(void *dev, enum npm2100_regulator_source source, uint16_t mode)
 {
 	switch (source) {
 	case NPM2100_SOURCE_BOOST:

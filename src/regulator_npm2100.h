@@ -35,6 +35,13 @@ enum npm2100_regulator_source {
 #define NPM2100_REG_FORCE_PASS 0x40U
 #define NPM2100_REG_FORCE_NOHP 0x50U
 
+/* DPS mode configuration */
+#define NPM2100_DPS_OFF	  0x000U
+#define NPM2100_DPS_100US 0x100U
+#define NPM2100_DPS_200US 0x300U
+#define NPM2100_DPS_400US 0x500U
+#define NPM2100_DPS_800US 0x700U
+
 /**
  * @brief Set the output voltage.
  *
@@ -116,7 +123,8 @@ int regulator_npm2100_pin_ctrl(void *dev, enum npm2100_regulator_source source, 
  * @brief Set mode.
  *
  * Configure regulator mode.
- * Mode should be a NPM2100_REG_OPER_ define, optionally masked with an NPM2100_REG_FORCE_ define
+ * Mode should be a NPM2100_REG_OPER_ define, optionally masked with NPM2100_REG_FORCE_ or
+ * NPM2100_DPS_ defines.
  *
  * @param dev device pointer, passed to i2c hal layer.
  * @param source regulator source identifier.
@@ -124,6 +132,6 @@ int regulator_npm2100_pin_ctrl(void *dev, enum npm2100_regulator_source source, 
  *
  * @return 0 If successful, -errno In case of bus error
  */
-int regulator_npm2100_set_mode(void *dev, enum npm2100_regulator_source source, uint8_t mode);
+int regulator_npm2100_set_mode(void *dev, enum npm2100_regulator_source source, uint16_t mode);
 
 #endif /* REGULATOR_NPM2100_H_*/
