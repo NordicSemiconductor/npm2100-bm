@@ -15,6 +15,9 @@
 
 #define BOOST_DPSCOUNT 0x25U
 #define BOOST_DPSLIMIT 0x26U
+#define BOOST_CTRLSET  0x2AU
+#define BOOST_CTRLCLR  0x2BU
+#define BOOST_VBATSEL  0x2EU
 #define BOOST_VBATMINL 0x2FU
 #define BOOST_VBATMINH 0x30U
 #define BOOST_VOUTMIN  0x31U
@@ -42,6 +45,8 @@ struct adc_config_t {
 struct adc_attr_t {
 	const struct linear_range *range;
 	uint8_t reg;
+	uint8_t ctrlsel_mask;
+	uint8_t vbatsel_mask;
 };
 
 static const struct adc_config_t adc_config[] = {
@@ -57,12 +62,12 @@ static const struct linear_range vdps_range = LINEAR_RANGE_INIT(1800000, 50000, 
 static const struct linear_range dpslim_range = LINEAR_RANGE_INIT(3, 1, 3U, 255U);
 
 static const struct adc_attr_t adc_attr[] = {
-	[NPM2100_ADC_VBATMINH] = {&vbat_range, BOOST_VBATMINH},
-	[NPM2100_ADC_VBATMINL] = {&vbat_range, BOOST_VBATMINL},
-	[NPM2100_ADC_VOUTDPS] = {&vdps_range, BOOST_VOUTDPS},
-	[NPM2100_ADC_VOUTMIN] = {&vout_range, BOOST_VOUTMIN},
-	[NPM2100_ADC_VOUTWRN] = {&vout_range, BOOST_VOUTWRN},
-	[NPM2100_ADC_DPSLIMIT] = {&dpslim_range, BOOST_DPSLIMIT},
+	[NPM2100_ADC_VBATMINH] = {&vbat_range, BOOST_VBATMINH, 0, BIT(1)},
+	[NPM2100_ADC_VBATMINL] = {&vbat_range, BOOST_VBATMINL, 0, BIT(0)},
+	[NPM2100_ADC_VOUTDPS] = {&vdps_range, BOOST_VOUTDPS, BIT(2), 0},
+	[NPM2100_ADC_VOUTMIN] = {&vout_range, BOOST_VOUTMIN, BIT(0), 0},
+	[NPM2100_ADC_VOUTWRN] = {&vout_range, BOOST_VOUTWRN, BIT(1), 0},
+	[NPM2100_ADC_DPSLIMIT] = {&dpslim_range, BOOST_DPSLIMIT, 0, 0},
 };
 
 int adc_npm2100_take_reading(void *dev, enum npm2100_adc_chan chan)
@@ -152,5 +157,30 @@ int adc_npm2100_attr_set(void *dev, enum npm2100_adc_attr attr, int32_t value)
 		return ret;
 	}
 
-	return i2c_reg_write_byte(dev, adc_attr[attr].reg, data);
+	if (adc_attr[attr].ctrlsel_mask == 0) {
+		/* No control bit, so update threshold */
+		ret = i2c_reg_write_byte(dev, adc_attr[attr].reg, data);
+		if ((ret < 0) || (adc_attr[attr].vbatsel_mask == 0)) {
+			return ret;
+		}
+
+		/* Set vbat threshold to SW control if required */
+		return i2c_reg_update_byte(dev, BOOST_VBATSEL, adc_attr[attr].vbatsel_mask,
+					   adc_attr[attr].vbatsel_mask);
+	}
+
+	/* Disable comparator */
+	ret = i2c_reg_write_byte(dev, BOOST_CTRLCLR, adc_attr[attr].ctrlsel_mask);
+	if (ret < 0) {
+		return ret;
+	}
+
+	/* Set threshold */
+	ret = i2c_reg_write_byte(dev, adc_attr[attr].reg, data);
+	if (ret < 0) {
+		return ret;
+	}
+
+	/* Enable comparator */
+	return i2c_reg_write_byte(dev, BOOST_CTRLSET, adc_attr[attr].ctrlsel_mask);
 }
