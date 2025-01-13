@@ -24,9 +24,9 @@
 #define BOOST_VOUTWRN  0x32U
 #define BOOST_VOUTDPS  0x33U
 
-#define ADC_TASKS_START 0x90U
-#define ADC_CONFIG	0X91U
-#define ADC_RESULTS	0x96U
+#define ADC_TASKS_ADC 0x90U
+#define ADC_CONFIG    0X91U
+#define ADC_RESULTS   0x96U
 
 #define CONFIG_MODE_INS_VBAT 0x00U
 #define CONFIG_MODE_DEL_VBAT 0x01U
@@ -83,7 +83,7 @@ int adc_npm2100_take_reading(void *dev, enum npm2100_adc_chan chan)
 		if (ret < 0) {
 			return ret;
 		}
-		return i2c_reg_write_byte(dev, ADC_TASKS_START, 1U);
+		return i2c_reg_write_byte(dev, ADC_TASKS_ADC, 1U);
 
 	case NPM2100_ADC_DPSCOUNT:
 		return 0;

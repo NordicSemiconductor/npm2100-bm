@@ -14,6 +14,7 @@
 #define EVENTS_CLR	      0x05U
 #define INTEN_SET	      0x0AU
 #define INTEN_CLR	      0x0FU
+
 #define TIMER_CONFIG	      0xB3U
 #define TIMER_TARGET	      0xB4U
 #define HIBERNATE_TASKS_HIBER 0xC8U

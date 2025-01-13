@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.20.0)
 
-project(npm2100 VERSION 0.1)
+project(npm2100 VERSION 0.2)
 
 include_directories(
         src

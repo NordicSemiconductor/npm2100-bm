@@ -29,10 +29,10 @@
 #define BOOST_VSET0    0x36U
 #define BOOST_VSET1    0x37U
 
-#define LDOSW_VOUT   0x64U
-#define LDOSW_ENABLE 0x65U
-#define LDOSW_SEL    0x66U
-#define LDOSW_GPIO   0x67U
+#define LDOSW_VOUT   0x68U
+#define LDOSW_ENABLE 0x69U
+#define LDOSW_SEL    0x6AU
+#define LDOSW_GPIO   0x6BU
 
 #define SHIP_TASK_SHIP 0xC0U
 
