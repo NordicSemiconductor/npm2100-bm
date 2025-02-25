@@ -13,81 +13,73 @@
 #include "linear_range.h"
 #include "util.h"
 
-#define BOOST_DPSCOUNT 0x25U
-#define BOOST_DPSLIMIT 0x26U
-#define BOOST_CTRLSET  0x2AU
-#define BOOST_CTRLCLR  0x2BU
 #define BOOST_VBATSEL  0x2EU
-#define BOOST_VBATMINL 0x2FU
 #define BOOST_VBATMINH 0x30U
-#define BOOST_VOUTMIN  0x31U
-#define BOOST_VOUTWRN  0x32U
-#define BOOST_VOUTDPS  0x33U
 
-#define ADC_TASKS_ADC 0x90U
-#define ADC_CONFIG    0X91U
-#define ADC_RESULTS   0x96U
+#define BOOST_VBATMINH_MASK    0x3FU
+#define BOOST_VBATMINHSEL_MASK 0x02U
+
+#define ADC_TASKS_ADC      0x90U
+#define ADC_CONFIG         0x91U
+#define ADC_DELAY          0x92U
+#define ADC_OFFSETCFG      0x93U
+#define ADC_READVBAT       0x96U
+#define ADC_READTEMP       0x97U
+#define ADC_READVOUT       0x99U
+#define ADC_AVERAGE        0x9BU
+#define ADC_OFFSETMEASURED 0x9FU
+
+#define ADC_CONFIG_MODE_MASK 0x07U
+#define ADC_CONFIG_AVG_MASK  0x38U
+#define ADC_SELOFFSET_MASK   0x02U
 
 #define CONFIG_MODE_INS_VBAT 0x00U
 #define CONFIG_MODE_DEL_VBAT 0x01U
 #define CONFIG_MODE_TEMP     0x02U
-#define CONFIG_MODE_DROOP    0x03U
 #define CONFIG_MODE_VOUT     0x04U
 #define CONFIG_MODE_OFFSET   0x05U
 
 struct adc_config_t {
-	uint8_t mode;
+	uint8_t config;
+	uint8_t delay;
+	uint8_t result_reg;
 	int32_t mul;
 	int32_t div;
 	int32_t offset;
 };
 
-struct adc_attr_t {
-	const struct linear_range *range;
-	uint8_t reg;
-	uint8_t ctrlsel_mask;
-	uint8_t vbatsel_mask;
+static struct adc_config_t adc_config[] = {
+	[NPM2100_ADC_CHAN_VBAT]    = {CONFIG_MODE_INS_VBAT, 0, ADC_READVBAT,       3200000, 256, 0},
+	[NPM2100_ADC_CHAN_DIETEMP] = {CONFIG_MODE_TEMP,     0, ADC_READTEMP,       2120000, -1,  389500000},
+	[NPM2100_ADC_CHAN_VOUT]    = {CONFIG_MODE_VOUT,     0, ADC_READVOUT,       1500000, 256, 1800000},
+	[NPM2100_ADC_CHAN_OFFSET]  = {CONFIG_MODE_OFFSET,   0, ADC_OFFSETMEASURED, 1,       1,   0},
 };
 
-static const struct adc_config_t adc_config[] = {
-	[NPM2100_ADC_VBAT] = {CONFIG_MODE_INS_VBAT, 3200000, 256, 0},
-	[NPM2100_ADC_DIETEMP] = {CONFIG_MODE_TEMP, -2120000, 1, 389500000},
-	[NPM2100_ADC_DROOP] = {CONFIG_MODE_DROOP, 1500000, 256, 1800000},
-	[NPM2100_ADC_VOUT] = {CONFIG_MODE_VOUT, 1500000, 256, 1800000},
-};
-
-static const struct linear_range vbat_range = LINEAR_RANGE_INIT(700000, 50000, 0U, 46U);
-static const struct linear_range vout_range = LINEAR_RANGE_INIT(1700000, 50000, 0U, 31U);
-static const struct linear_range vdps_range = LINEAR_RANGE_INIT(1800000, 50000, 0U, 31U);
-static const struct linear_range dpslim_range = LINEAR_RANGE_INIT(3, 1, 3U, 255U);
-
-static const struct adc_attr_t adc_attr[] = {
-	[NPM2100_ADC_VBATMINH] = {&vbat_range, BOOST_VBATMINH, 0, BIT(1)},
-	[NPM2100_ADC_VBATMINL] = {&vbat_range, BOOST_VBATMINL, 0, BIT(0)},
-	[NPM2100_ADC_VOUTDPS] = {&vdps_range, BOOST_VOUTDPS, BIT(2), 0},
-	[NPM2100_ADC_VOUTMIN] = {&vout_range, BOOST_VOUTMIN, BIT(0), 0},
-	[NPM2100_ADC_VOUTWRN] = {&vout_range, BOOST_VOUTWRN, BIT(1), 0},
-	[NPM2100_ADC_DPSLIMIT] = {&dpslim_range, BOOST_DPSLIMIT, 0, 0},
-};
+static const struct linear_range vbat_range = LINEAR_RANGE_INIT(650000, 50000, 0U, 50U);
+static const struct linear_range oversampling_range = LINEAR_RANGE_INIT(0, 1, 0U, 4U);
+static const struct linear_range delay_range = LINEAR_RANGE_INIT(5000, 4000, 0U, 255U);
 
 int adc_npm2100_take_reading(void *dev, enum npm2100_adc_chan chan)
 {
 	int ret;
 
 	switch (chan) {
-	case NPM2100_ADC_VBAT:
-	case NPM2100_ADC_DIETEMP:
-	case NPM2100_ADC_DROOP:
-	case NPM2100_ADC_VOUT:
-		ret = i2c_reg_write_byte(dev, ADC_CONFIG, adc_config[chan].mode);
+	case NPM2100_ADC_CHAN_VBAT:
+		if (adc_config[chan].delay > 0) {
+			ret = i2c_reg_write_byte(dev, ADC_DELAY, adc_config[chan].delay);
+			if (ret < 0) {
+				return ret;
+			}
+		}
+	/* fall through */
+	case NPM2100_ADC_CHAN_DIETEMP:
+	case NPM2100_ADC_CHAN_VOUT:
+	case NPM2100_ADC_CHAN_OFFSET:
+		ret = i2c_reg_write_byte(dev, ADC_CONFIG, adc_config[chan].config);
 		if (ret < 0) {
 			return ret;
 		}
 		return i2c_reg_write_byte(dev, ADC_TASKS_ADC, 1U);
-
-	case NPM2100_ADC_DPSCOUNT:
-		return 0;
-
 	default:
 		return -ENODEV;
 	}
@@ -97,13 +89,20 @@ int adc_npm2100_get_result(void *dev, enum npm2100_adc_chan chan, int32_t *value
 {
 	uint8_t data;
 	int ret;
+	uint8_t reg_addr;
 
 	switch (chan) {
-	case NPM2100_ADC_VBAT:
-	case NPM2100_ADC_DIETEMP:
-	case NPM2100_ADC_DROOP:
-	case NPM2100_ADC_VOUT:
-		ret = i2c_reg_read_byte(dev, ADC_RESULTS + chan, &data);
+	case NPM2100_ADC_CHAN_VBAT:
+	case NPM2100_ADC_CHAN_DIETEMP:
+	case NPM2100_ADC_CHAN_VOUT:
+	case NPM2100_ADC_CHAN_OFFSET:
+		if (FIELD_GET(ADC_CONFIG_AVG_MASK, adc_config[chan].config) == 0) {
+			reg_addr = adc_config[chan].result_reg;
+		} else {
+			reg_addr = ADC_AVERAGE;
+		}
+
+		ret = i2c_reg_read_byte(dev, reg_addr, &data);
 		if (ret < 0) {
 			return ret;
 		}
@@ -113,74 +112,129 @@ int adc_npm2100_get_result(void *dev, enum npm2100_adc_chan chan, int32_t *value
 
 		return 0;
 
-	case NPM2100_ADC_DPSCOUNT:
-		ret = i2c_reg_read_byte(dev, BOOST_DPSCOUNT, &data);
-		if (ret < 0) {
-			return ret;
-		}
-
-		*value = data;
-
-		return 0;
-
 	default:
 		return -ENODEV;
 	}
 }
 
-int adc_npm2100_attr_get(void *dev, enum npm2100_adc_attr attr, int32_t *value)
+int adc_npm2100_attr_get(void *dev, enum npm2100_adc_chan chan, enum npm2100_adc_attr attr, int32_t *value)
 {
-	if (attr >= ARRAY_SIZE(adc_attr)) {
-		return -ENODEV;
-	}
-
 	uint8_t data;
-	int ret = i2c_reg_read_byte(dev, adc_attr[attr].reg, &data);
+	int ret;
 
-	if (ret < 0) {
-		return ret;
-	}
+	switch (attr) {
+	case NPM2100_ADC_ATTR_OVERSAMPLING:
+		if (chan == NPM2100_ADC_CHAN_OFFSET || chan >= ARRAY_SIZE(adc_config)) {
+			break;
+		}
 
-	return linear_range_get_value(adc_attr[attr].range, data, value);
-}
+		data = FIELD_GET(ADC_CONFIG_AVG_MASK, adc_config[chan].config);
 
-int adc_npm2100_attr_set(void *dev, enum npm2100_adc_attr attr, int32_t value)
-{
-	if (attr >= ARRAY_SIZE(adc_attr)) {
-		return -ENODEV;
-	}
+		return linear_range_get_value(&oversampling_range, data, value);
 
-	uint16_t data;
-	int ret = linear_range_get_index(adc_attr[attr].range, value, &data);
+	case NPM2100_ADC_ATTR_DELAY:
+		if (chan != NPM2100_ADC_CHAN_VBAT) {
+			break;
+		}
 
-	if (ret < 0) {
-		return ret;
-	}
+		return linear_range_get_value(&delay_range, adc_config[chan].delay, value);
 
-	if (adc_attr[attr].ctrlsel_mask == 0) {
-		/* No control bit, so update threshold */
-		ret = i2c_reg_write_byte(dev, adc_attr[attr].reg, data);
-		if ((ret < 0) || (adc_attr[attr].vbatsel_mask == 0)) {
+	case NPM2100_ADC_ATTR_VBATMIN:
+		if (chan != NPM2100_ADC_CHAN_VBAT) {
+			break;
+		}
+
+		ret = i2c_reg_read_byte(dev, BOOST_VBATMINH, &data);
+		if (ret < 0) {
 			return ret;
 		}
 
-		/* Set vbat threshold to SW control if required */
-		return i2c_reg_update_byte(dev, BOOST_VBATSEL, adc_attr[attr].vbatsel_mask,
-					   adc_attr[attr].vbatsel_mask);
+		return linear_range_get_value(&vbat_range, data, value);
+
+	case NPM2100_ADC_ATTR_OFFSET_SOURCE:
+		ret = i2c_reg_read_byte(dev, ADC_OFFSETCFG, &data);
+		if (ret < 0) {
+			return ret;
+		}
+
+		*value = FIELD_GET(ADC_SELOFFSET_MASK, data);
+		return 0;
+
+	default:
+		break;
 	}
 
-	/* Disable comparator */
-	ret = i2c_reg_write_byte(dev, BOOST_CTRLCLR, adc_attr[attr].ctrlsel_mask);
-	if (ret < 0) {
-		return ret;
+	return -ENOTSUP;
+}
+
+int adc_npm2100_attr_set(void *dev, enum npm2100_adc_chan chan, enum npm2100_adc_attr attr, int32_t value)
+{
+	uint16_t data;
+	int ret;
+
+	switch (attr) {
+	case NPM2100_ADC_ATTR_OVERSAMPLING:
+		if (chan == NPM2100_ADC_CHAN_OFFSET || chan >= ARRAY_SIZE(adc_config)) {
+			break;
+		}
+
+		ret = linear_range_get_index(&oversampling_range, value, &data);
+		if (ret < 0) {
+			return ret;
+		}
+
+		adc_config[chan].config &= ~ADC_CONFIG_AVG_MASK;
+		adc_config[chan].config |= FIELD_PREP(ADC_CONFIG_AVG_MASK, data);
+
+		return 0;
+
+	case NPM2100_ADC_ATTR_DELAY:
+		if (chan != NPM2100_ADC_CHAN_VBAT) {
+			break;
+		}
+
+		ret = linear_range_get_index(&delay_range, value, &data);
+		if (ret < 0) {
+			return ret;
+		}
+
+		adc_config[chan].delay = (uint8_t)data;
+		adc_config[chan].config &= ~ADC_CONFIG_MODE_MASK;
+		if (value > 0) {
+			adc_config[chan].config |= FIELD_PREP(ADC_CONFIG_MODE_MASK, CONFIG_MODE_DEL_VBAT);
+		} else {
+			adc_config[chan].config |= FIELD_PREP(ADC_CONFIG_MODE_MASK, CONFIG_MODE_INS_VBAT);
+		}
+
+		return 0;
+
+	case NPM2100_ADC_ATTR_VBATMIN:
+		if (chan != NPM2100_ADC_CHAN_VBAT) {
+			break;
+		}
+
+		ret = linear_range_get_index(&vbat_range, value, &data);
+		if (ret < 0) {
+			return ret;
+		}
+
+		ret = i2c_reg_write_byte(dev, BOOST_VBATMINH, (uint8_t)data);
+		if (ret < 0) {
+			return ret;
+		}
+
+		return i2c_reg_update_byte(dev, BOOST_VBATMINH, BOOST_VBATMINHSEL_MASK, BOOST_VBATMINHSEL_MASK);
+
+	case NPM2100_ADC_ATTR_OFFSET_SOURCE:
+		if (value != NPM2100_ADC_OFFSET_FACTORY && value != NPM2100_ADC_OFFSET_MEASURED) {
+			return -EINVAL;
+		}
+
+		return i2c_reg_update_byte(dev, ADC_OFFSETCFG, ADC_SELOFFSET_MASK, FIELD_PREP(ADC_SELOFFSET_MASK, value));
+
+	default:
+		break;
 	}
 
-	/* Set threshold */
-	ret = i2c_reg_write_byte(dev, adc_attr[attr].reg, data);
-	if (ret < 0) {
-		return ret;
-	}
-
-	/* Enable comparator */
-	return i2c_reg_write_byte(dev, BOOST_CTRLSET, adc_attr[attr].ctrlsel_mask);
+	return -ENOTSUP;
 }

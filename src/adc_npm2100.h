@@ -10,21 +10,24 @@
 
 /* nPM2100 adc channels */
 enum npm2100_adc_chan {
-	NPM2100_ADC_VBAT = 0,
-	NPM2100_ADC_DIETEMP = 1,
-	NPM2100_ADC_DROOP = 2,
-	NPM2100_ADC_VOUT = 3,
-	NPM2100_ADC_DPSCOUNT = 4
+	NPM2100_ADC_CHAN_VBAT,
+	NPM2100_ADC_CHAN_DIETEMP,
+	NPM2100_ADC_CHAN_VOUT,
+	NPM2100_ADC_CHAN_OFFSET,
 };
 
 /* nPM2100 adc attributes */
 enum npm2100_adc_attr {
-	NPM2100_ADC_VBATMINH,
-	NPM2100_ADC_VBATMINL,
-	NPM2100_ADC_VOUTDPS,
-	NPM2100_ADC_VOUTMIN,
-	NPM2100_ADC_VOUTWRN,
-	NPM2100_ADC_DPSLIMIT,
+	NPM2100_ADC_ATTR_VBATMIN,
+	/* Oversample factor is 2^value */
+	NPM2100_ADC_ATTR_OVERSAMPLING,
+	NPM2100_ADC_ATTR_DELAY,
+	NPM2100_ADC_ATTR_OFFSET_SOURCE,
+};
+
+enum npm2100_adc_offset_src {
+	NPM2100_ADC_OFFSET_FACTORY =  0,
+	NPM2100_ADC_OFFSET_MEASURED = 1,
 };
 
 /**
@@ -63,9 +66,11 @@ int adc_npm2100_get_result(void *dev, enum npm2100_adc_chan chan, int32_t *value
  * @param attr adc attribute.
  * @param value Result value, in micro units.
  *
- * @return 0 If successful, -ENODEV If the channel is invalid, -errno In case of bus error
+ * @return 0 If successful
+ * @return -ENOTSUP If the channel/attribute combination is invalid, or no such attribute
+ * @return -errno In case of bus/conversion errors
  */
-int adc_npm2100_attr_get(void *dev, enum npm2100_adc_attr attr, int32_t *value);
+int adc_npm2100_attr_get(void *dev, enum npm2100_adc_chan chan, enum npm2100_adc_attr attr, int32_t *value);
 
 /**
  * @brief Set ADC attribute
@@ -74,8 +79,10 @@ int adc_npm2100_attr_get(void *dev, enum npm2100_adc_attr attr, int32_t *value);
  * @param attr adc attribute.
  * @param value Value to set, in micro units.
  *
- * @return 0 If successful, -ENODEV If the channel is invalid, -errno In case of bus error
+ * @return 0 If successful
+ * @return -ENOTSUP If the channel/attribute combination is invalid, or no such attribute
+ * @return -errno In case of bus/conversion errors
  */
-int adc_npm2100_attr_set(void *dev, enum npm2100_adc_attr attr, int32_t value);
+int adc_npm2100_attr_set(void *dev, enum npm2100_adc_chan chan, enum npm2100_adc_attr attr, int32_t value);
 
 #endif /* ADC_NPM2100_H_*/

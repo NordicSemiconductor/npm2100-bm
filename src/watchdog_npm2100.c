@@ -3,8 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <errno.h>
-
+#include "errno.h"
 #include "i2c.h"
 #include "mfd_npm2100.h"
 #include "watchdog_npm2100.h"
@@ -25,22 +24,30 @@
 
 int watchdog_npm2100_disable(void *dev)
 {
-	return i2c_reg_write_byte(dev, TIMER_TASKS_STOP, 1U);
+	return mfd_npm2100_stop_timer(dev);
 }
 
 int watchdog_npm2100_init(void *dev, uint32_t timeout_ms, enum watchdog_npm2100_mode mode)
 {
-	int ret = mfd_npm2100_set_timer(dev, timeout_ms);
+	enum mfd_npm2100_timer_mode timer_mode;
+
+	switch (mode) {
+	case NPM2100_WATCHDOG_PIN_RESET:
+		timer_mode = NPM2100_TIMER_MODE_WDT_RESET;
+		break;
+	case NPM2100_WATCHDOG_POWER_CYCLE:
+		timer_mode = NPM2100_TIMER_MODE_WDT_POWER_CYCLE;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	int ret = mfd_npm2100_set_timer(dev, timeout_ms, timer_mode);
 	if (ret < 0) {
 		return ret;
 	}
 
-	ret = i2c_reg_write_byte(dev, TIMER_CONFIG, mode);
-	if (ret < 0) {
-		return ret;
-	}
-
-	return i2c_reg_write_byte(dev, TIMER_TASKS_START, 1U);
+	return mfd_npm2100_start_timer(dev);
 }
 
 int watchdog_npm2100_feed(void *dev)
