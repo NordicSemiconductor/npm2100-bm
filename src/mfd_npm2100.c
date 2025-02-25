@@ -10,22 +10,57 @@
 #include "mfd_npm2100.h"
 #include "util.h"
 
-#define EVENTS_SET	      0x00U
-#define EVENTS_CLR	      0x05U
-#define INTEN_SET	      0x0AU
-#define INTEN_CLR	      0x0FU
+#define EVENTS_SET        0x00U
+#define EVENTS_CLR        0x05U
+#define INTEN_SET         0x0AU
+#define INTEN_CLR         0x0FU
+#define TIMER_STATUS      0xB7U
 
-#define TIMER_CONFIG	      0xB3U
-#define TIMER_TARGET	      0xB4U
-#define HIBERNATE_TASKS_HIBER 0xC8U
-#define RESET_TASKS_RESET     0xD0U
+#define TIMER_TASKS_START       0xB0U
+#define TIMER_TASKS_STOP        0xB1U
+#define TIMER_CONFIG            0xB3U
+#define TIMER_TARGET            0xB4U
+#define HIBERNATE_TASKS_HIBER   0xC8U
+#define HIBERNATE_TASKS_HIBERPT 0xC9U
+#define RESET_TASKS_RESET       0xD0U
 
-#define TIMER_CONFIG_WKUP 3U
+#define TIMER_STATUS_IDLE 0U
 
-#define TIMER_PRESCALER_MS 16U
-#define TIMER_MAX	   0xFFFFFFU
+#define TIMER_PRESCALER_MUL 64ULL
+#define TIMER_PRESCALER_DIV 1000ULL
+#define TIMER_MAX           0xFFFFFFU
 
 #define EVENTS_SIZE 5U
+
+#define SHIP_WAKEUP 0xC1U
+#define SHIP_SHPHLD 0xC2U
+
+#define WAKEUP_EDGE_MASK       0x01U
+#define WAKEUP_HIBERNATE_MASK  0x02U
+#define WAKEUP_EDGE_RISING     0x01U
+#define WAKEUP_HIBERNATE_NOPIN 0x01U
+
+#define SHPHLD_RESISTOR_MASK 0x03U
+#define SHPHLD_CURR_MASK     0x0CU
+#define SHPHLD_PULL_MASK     0x10U
+#define RESISTOR_PULL_NONE   0x01U
+#define RESISTOR_PULL_DOWN   0x02U
+#define SHPHLD_PULL_ENABLE   0x01U
+
+#define SHIP_BUTTON_DISABLE 0x01U
+
+#define RESET_BUTTON       0xD2U
+#define RESET_PIN          0xD3U
+#define RESET_DEBOUNCE     0xD4U
+#define RESET_WRITESTICKY  0xDBU
+#define RESET_STROBESTICKY 0xDCU
+
+#define LONGPRESS_DISABLE 0x01U
+#define RESET_PIN_SHPHLD  0x01U
+
+#define PWRBUTTON_MASK     0x04U
+#define PWRBUTTON_DISABLED 0x01U
+#define STROBE             0x01U
 
 struct event_reg_t {
 	uint8_t offset;
@@ -56,18 +91,45 @@ static const struct event_reg_t event_reg[NPM2100_EVENT_MAX] = {
 	[NPM2100_EVENT_LDOSW_VINTFAIL] = {0x04U, 0x02U},
 };
 
-int mfd_npm2100_set_timer(void *dev, uint32_t time_ms)
+int mfd_npm2100_set_timer(void *dev, uint32_t time_ms, enum mfd_npm2100_timer_mode mode)
 {
 	uint8_t buff[4] = {TIMER_TARGET};
-	uint32_t ticks = time_ms / TIMER_PRESCALER_MS;
+	int64_t ticks = DIV_ROUND_CLOSEST(((int64_t)time_ms * TIMER_PRESCALER_MUL),
+						     TIMER_PRESCALER_DIV);
+	uint8_t timer_status;
+	int ret;
 
 	if (ticks > TIMER_MAX) {
 		return -EINVAL;
 	}
 
+	ret = i2c_reg_read_byte(dev, TIMER_STATUS, &timer_status);
+	if (ret < 0) {
+		return ret;
+	}
+
+	if (timer_status != TIMER_STATUS_IDLE) {
+		return -EBUSY;
+	}
+
 	sys_put_be24(ticks, &buff[1]);
 
-	return i2c_write(dev, buff, sizeof(buff));
+	ret = i2c_write(dev, buff, sizeof(buff));
+	if (ret < 0) {
+		return ret;
+	}
+
+	return i2c_reg_write_byte(dev, TIMER_CONFIG, mode);
+}
+
+int mfd_npm2100_start_timer(void *dev)
+{
+	return i2c_reg_write_byte(dev, TIMER_TASKS_START, 1U);
+}
+
+int mfd_npm2100_stop_timer(void *dev)
+{
+	return i2c_reg_write_byte(dev, TIMER_TASKS_STOP, 1U);
 }
 
 int mfd_npm2100_reset(void *dev)
@@ -75,15 +137,23 @@ int mfd_npm2100_reset(void *dev)
 	return i2c_reg_write_byte(dev, RESET_TASKS_RESET, 1U);
 }
 
-int mfd_npm2100_hibernate(void *dev, uint32_t time_ms)
+int mfd_npm2100_hibernate(void *dev, uint32_t time_ms, bool pass_through)
 {
-	int ret = mfd_npm2100_set_timer(dev, time_ms);
+	if (time_ms > 0) {
+		int ret = mfd_npm2100_set_timer(dev, time_ms, NPM2100_TIMER_MODE_WAKEUP);
 
-	if (ret != 0) {
-		return ret;
+		if (ret < 0) {
+			return ret;
+		}
+
+		ret = mfd_npm2100_start_timer(dev);
+
+		if (ret < 0) {
+			return ret;
+		}
 	}
 
-	return i2c_reg_write_byte(dev, HIBERNATE_TASKS_HIBER, 1U);
+	return i2c_reg_write_byte(dev, pass_through ? HIBERNATE_TASKS_HIBERPT : HIBERNATE_TASKS_HIBER, 1U);
 }
 
 int mfd_npm2100_enable_events(void *dev, uint32_t events)
@@ -156,4 +226,79 @@ int mfd_npm2100_process_events(void *dev, uint32_t *events)
 	ret = i2c_write(dev, buf, EVENTS_SIZE + 1U);
 
 	return ret;
+}
+
+int mfd_npm2100_config_shphld(void *dev, const struct mfd_npm2100_shphld_config *config)
+{
+	uint8_t reg = 0U;
+	int ret;
+
+	if (config->wakeup_on_rising_edge) {
+		reg |= FIELD_PREP(WAKEUP_EDGE_MASK, WAKEUP_EDGE_RISING);
+	}
+	if (config->disable_wakeup_from_hiber) {
+		reg |= FIELD_PREP(WAKEUP_HIBERNATE_MASK, WAKEUP_HIBERNATE_NOPIN);
+	}
+
+	ret = i2c_reg_write_byte(dev, SHIP_WAKEUP, reg);
+	if (ret < 0) {
+		return ret;
+	}
+
+	switch (config->pull) {
+	case NPM2100_SHPHLD_PULL_UP_RESISTOR:
+		reg = 0U;
+		break;
+	case NPM2100_SHPHLD_PULL_DOWN_RESISTOR:
+		reg = FIELD_PREP(SHPHLD_RESISTOR_MASK, RESISTOR_PULL_DOWN);
+		break;
+	case NPM2100_SHPHLD_PULL_CURR_WEAK:
+	case NPM2100_SHPHLD_PULL_CURR_LOW:
+	case NPM2100_SHPHLD_PULL_CURR_MODERATE:
+	case NPM2100_SHPHLD_PULL_CURR_HIGH:
+		reg = FIELD_PREP(SHPHLD_RESISTOR_MASK, RESISTOR_PULL_NONE);
+		reg |= FIELD_PREP(SHPHLD_PULL_MASK, SHPHLD_PULL_ENABLE);
+		reg |= FIELD_PREP(SHPHLD_CURR_MASK, config->pull - NPM2100_SHPHLD_PULL_CURR_WEAK);
+		break;
+	case NPM2100_SHPHLD_PULL_NONE:
+		reg = FIELD_PREP(SHPHLD_RESISTOR_MASK, RESISTOR_PULL_NONE);
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	ret = i2c_reg_write_byte(dev, SHIP_SHPHLD, reg);
+	if (ret < 0) {
+		return ret;
+	}
+
+	if (config->disable_power_off) {
+		reg = FIELD_PREP(PWRBUTTON_MASK, PWRBUTTON_DISABLED);
+		ret = i2c_reg_update_byte(dev, RESET_WRITESTICKY, PWRBUTTON_MASK, reg); 
+		if (ret < 0) {
+			return ret;
+		}
+		ret = i2c_reg_write_byte(dev, RESET_STROBESTICKY, STROBE);
+	}
+
+	return ret;
+}
+
+int mfd_npm2100_config_reset(void *dev, const struct mfd_npm2100_reset_config *config) {
+	int ret;
+
+	uint8_t reg = (config->use_shphld_pin) ? RESET_PIN_SHPHLD : 0U;
+	ret = i2c_reg_write_byte(dev, RESET_PIN, reg);
+	if (ret < 0) {
+		return ret;
+	}
+
+	reg = (config->disable_long_press) ? LONGPRESS_DISABLE : 0U;
+	ret = i2c_reg_write_byte(dev, RESET_BUTTON, reg);
+	if (ret < 0) {
+		return ret;
+	}
+
+	reg = (uint8_t)config->debounce;
+	return i2c_reg_write_byte(dev, RESET_DEBOUNCE, reg);
 }

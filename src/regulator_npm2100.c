@@ -48,9 +48,6 @@
 #define BOOST_PIN_FORCE_PASS 0x03U
 #define BOOST_PIN_FORCE_NOHP 0x04U
 
-#define BOOST_OPER_DPS_MASK  0x700U
-#define BOOST_OPER_DPS_SHIFT 5U
-
 #define BOOST_STATUS1_VSET_MASK 0x40U
 
 #define LDOSW_SEL_OPER_MASK 0x06U
@@ -59,10 +56,10 @@
 #define LDOSW_SEL_OPER_HP   0x04U
 #define LDOSW_SEL_OPER_PIN  0x06U
 
-#define LDOSW_GPIO_PIN_MASK	0x07U
-#define LDOSW_GPIO_PINACT_MASK	0x18U
-#define LDOSW_GPIO_PINACT_HP	0x00U
-#define LDOSW_GPIO_PINACT_ULP	0x08U
+#define LDOSW_GPIO_PIN_MASK     0x07U
+#define LDOSW_GPIO_PINACT_MASK  0x18U
+#define LDOSW_GPIO_PINACT_HP    0x00U
+#define LDOSW_GPIO_PINACT_ULP   0x08U
 #define LDOSW_GPIO_PININACT_OFF 0x00U
 #define LDOSW_GPIO_PININACT_ULP 0x10U
 
@@ -172,7 +169,6 @@ static int set_boost_mode(void *dev, uint16_t mode)
 	uint8_t reg;
 	int ret;
 
-	/* Normal mode in lower nibble */
 	switch (mode & NPM2100_REG_OPER_MASK) {
 	case NPM2100_REG_OPER_AUTO:
 		reg = BOOST_OPER_MODE_AUTO;
@@ -193,15 +189,11 @@ static int set_boost_mode(void *dev, uint16_t mode)
 		return -ENOTSUP;
 	}
 
-	/* Configure DPS mode and timer */
-	reg |= (mode & BOOST_OPER_DPS_MASK) >> BOOST_OPER_DPS_SHIFT;
-
 	ret = i2c_reg_write_byte(dev, BOOST_OPER, reg);
 	if (ret < 0) {
 		return ret;
 	}
 
-	/* Forced mode in upper nibble */
 	switch (mode & NPM2100_REG_FORCE_MASK) {
 	case 0U:
 		return 0;

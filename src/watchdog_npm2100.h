@@ -10,9 +10,8 @@
 
 /* nPM2100 watchdog mode enumeration */
 enum watchdog_npm2100_mode {
-	NPM2100_WATCHDOG_RESET_NONE = 0,  //!< Watchdog expiry causes event only
-	NPM2100_WATCHDOG_RESET_PIN = 1,	  //!< Watchdog expiry strobes pin output
-	NPM2100_WATCHDOG_RESET_POWER = 2, //!< Watchdog expiry causes full power cycle of PMIC
+	NPM2100_WATCHDOG_PIN_RESET = 1,   //!< Watchdog expiry generates a host reset on PG/RESET
+	NPM2100_WATCHDOG_POWER_CYCLE = 2, //!< Watchdog expiry causes full power cycle of PMIC
 };
 
 /**
