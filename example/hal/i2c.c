@@ -1,6 +1,6 @@
 /** @file
- * Copyright (c) 2023 Nordic Semiconductor ASA
- * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+ * Copyright (c) 2025 Nordic Semiconductor ASA
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include <nrfx_twim.h>

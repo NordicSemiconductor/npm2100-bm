@@ -1,12 +1,11 @@
 /** @file
- * Copyright (c) 2023 Nordic Semiconductor ASA
- * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+ * Copyright (c) 2025 Nordic Semiconductor ASA
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include <stddef.h>
 #include <stdint.h>
 
-/** Anonymous i2c device structure */
 struct i2c_dev {
 	uint8_t addr; /* I2C device address */
 };
