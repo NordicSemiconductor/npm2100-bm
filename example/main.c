@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2025, Nordic Semiconductor ASA
- * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include "nrf_delay.h"

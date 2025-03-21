@@ -1,6 +1,6 @@
 /** @file
- * Copyright (c) 2023 Nordic Semiconductor ASA
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright (c) 2025 Nordic Semiconductor ASA
+ * SPDX-License-Identifier: BSD-3-Clause
  */
 
 #include <stddef.h>
