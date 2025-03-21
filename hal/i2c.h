@@ -6,10 +6,14 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/** Anonymous i2c device structure */
+/**
+ * @brief i2c device structure.
+ *
+ * This structure can be customized to adapt to the project's needs.
+ * An instance of this structure must be passed to all npm2100 driver function calls.
+ */
 struct i2c_dev {
 	uint8_t addr; /* I2C device address */
-	uint8_t *mem; /* Register data buffer */
 };
 
 /**
