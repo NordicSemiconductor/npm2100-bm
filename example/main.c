@@ -10,8 +10,9 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 #include "nrfx_gpiote.h"
+#include "nrfx_twim.h"
 
-#include "i2c.h"
+#include "i2c_nrf5sdk.h"
 #include "util.h"
 
 #include "adc_npm2100.h"
@@ -28,7 +29,9 @@
 
 #define V_TO_UV(v) ((v) * 1000000)
 
-struct i2c_dev npm2100_pmic = { .addr = 0x74 };
+static struct i2c_ctx npm2100_i2c_cxt;
+static struct i2c_dev npm2100_pmic = { .addr = 0x74, .context = &npm2100_i2c_cxt };
+static nrfx_twim_t npm2100_pmic_twim_inst = NRFX_TWIM_INSTANCE(0);
 
 static bool pmic_interrupt;
 
@@ -144,7 +147,7 @@ int main(void)
     NRF_LOG_INFO("nPM2100 example started");
     NRF_LOG_FLUSH();
 
-    ret = i2c_init(&npm2100_pmic, HOST_SDA_PIN, HOST_SCL_PIN);
+    ret = i2c_init(&npm2100_pmic, &npm2100_pmic_twim_inst, HOST_SDA_PIN, HOST_SCL_PIN);
     APP_ERROR_CHECK(ret);
 
     npm2100_ldo_setup();
