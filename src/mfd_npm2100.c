@@ -91,7 +91,7 @@ static const struct event_reg_t event_reg[NPM2100_EVENT_MAX] = {
 	[NPM2100_EVENT_LDOSW_VINTFAIL] = {0x04U, 0x02U},
 };
 
-int mfd_npm2100_set_timer(void *dev, uint32_t time_ms, enum mfd_npm2100_timer_mode mode)
+int mfd_npm2100_set_timer(struct i2c_dev *dev, uint32_t time_ms, enum mfd_npm2100_timer_mode mode)
 {
 	uint8_t buff[4] = {TIMER_TARGET};
 	int64_t ticks = DIV_ROUND_CLOSEST(((int64_t)time_ms * TIMER_PRESCALER_MUL),
@@ -122,22 +122,22 @@ int mfd_npm2100_set_timer(void *dev, uint32_t time_ms, enum mfd_npm2100_timer_mo
 	return i2c_reg_write_byte(dev, TIMER_CONFIG, mode);
 }
 
-int mfd_npm2100_start_timer(void *dev)
+int mfd_npm2100_start_timer(struct i2c_dev *dev)
 {
 	return i2c_reg_write_byte(dev, TIMER_TASKS_START, 1U);
 }
 
-int mfd_npm2100_stop_timer(void *dev)
+int mfd_npm2100_stop_timer(struct i2c_dev *dev)
 {
 	return i2c_reg_write_byte(dev, TIMER_TASKS_STOP, 1U);
 }
 
-int mfd_npm2100_reset(void *dev)
+int mfd_npm2100_reset(struct i2c_dev *dev)
 {
 	return i2c_reg_write_byte(dev, RESET_TASKS_RESET, 1U);
 }
 
-int mfd_npm2100_hibernate(void *dev, uint32_t time_ms, bool pass_through)
+int mfd_npm2100_hibernate(struct i2c_dev *dev, uint32_t time_ms, bool pass_through)
 {
 	if (time_ms > 0) {
 		int ret = mfd_npm2100_set_timer(dev, time_ms, NPM2100_TIMER_MODE_WAKEUP);
@@ -156,7 +156,7 @@ int mfd_npm2100_hibernate(void *dev, uint32_t time_ms, bool pass_through)
 	return i2c_reg_write_byte(dev, pass_through ? HIBERNATE_TASKS_HIBERPT : HIBERNATE_TASKS_HIBER, 1U);
 }
 
-int mfd_npm2100_enable_events(void *dev, uint32_t events)
+int mfd_npm2100_enable_events(struct i2c_dev *dev, uint32_t events)
 {
 	/* Enable interrupts for specified events */
 	for (int i = 0; i < NPM2100_EVENT_MAX; i++) {
@@ -180,7 +180,7 @@ int mfd_npm2100_enable_events(void *dev, uint32_t events)
 	return 0;
 }
 
-int mfd_npm2100_disable_events(void *dev, uint32_t events)
+int mfd_npm2100_disable_events(struct i2c_dev *dev, uint32_t events)
 {
 	/* Disable interrupts for specified events */
 	for (int i = 0; i < NPM2100_EVENT_MAX; i++) {
@@ -204,7 +204,7 @@ int mfd_npm2100_disable_events(void *dev, uint32_t events)
 	return 0;
 }
 
-int mfd_npm2100_process_events(void *dev, uint32_t *events)
+int mfd_npm2100_process_events(struct i2c_dev *dev, uint32_t *events)
 {
 	uint8_t buf[EVENTS_SIZE + 1U];
 	*events = 0U;
@@ -228,7 +228,7 @@ int mfd_npm2100_process_events(void *dev, uint32_t *events)
 	return ret;
 }
 
-int mfd_npm2100_config_shphld(void *dev, const struct mfd_npm2100_shphld_config *config)
+int mfd_npm2100_config_shphld(struct i2c_dev *dev, const struct mfd_npm2100_shphld_config *config)
 {
 	uint8_t reg = 0U;
 	int ret;
@@ -284,7 +284,7 @@ int mfd_npm2100_config_shphld(void *dev, const struct mfd_npm2100_shphld_config 
 	return ret;
 }
 
-int mfd_npm2100_config_reset(void *dev, const struct mfd_npm2100_reset_config *config) {
+int mfd_npm2100_config_reset(struct i2c_dev *dev, const struct mfd_npm2100_reset_config *config) {
 	int ret;
 
 	uint8_t reg = (config->use_shphld_pin) ? RESET_PIN_SHPHLD : 0U;

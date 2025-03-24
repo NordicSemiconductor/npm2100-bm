@@ -8,6 +8,8 @@
 
 #include <stdint.h>
 
+#include "i2c.h"
+
 /* nPM2100 adc channels */
 enum npm2100_adc_chan {
 	NPM2100_ADC_CHAN_VBAT,
@@ -43,7 +45,7 @@ enum npm2100_adc_offset_src {
  *
  * @return 0 If successful, -ENODEV If the channel is invalid, -errno In case of bus error
  */
-int adc_npm2100_take_reading(void *dev, enum npm2100_adc_chan chan);
+int adc_npm2100_take_reading(struct i2c_dev *dev, enum npm2100_adc_chan chan);
 
 /**
  * @brief Get result from ADC channel
@@ -57,7 +59,7 @@ int adc_npm2100_take_reading(void *dev, enum npm2100_adc_chan chan);
  *
  * @return 0 If successful, -ENODEV If the channel is invalid, -errno In case of bus error
  */
-int adc_npm2100_get_result(void *dev, enum npm2100_adc_chan chan, int32_t *value);
+int adc_npm2100_get_result(struct i2c_dev *dev, enum npm2100_adc_chan chan, int32_t *value);
 
 /**
  * @brief Get ADC attribute
@@ -70,7 +72,7 @@ int adc_npm2100_get_result(void *dev, enum npm2100_adc_chan chan, int32_t *value
  * @return -ENOTSUP If the channel/attribute combination is invalid, or no such attribute
  * @return -errno In case of bus/conversion errors
  */
-int adc_npm2100_attr_get(void *dev, enum npm2100_adc_chan chan, enum npm2100_adc_attr attr, int32_t *value);
+int adc_npm2100_attr_get(struct i2c_dev *dev, enum npm2100_adc_chan chan, enum npm2100_adc_attr attr, int32_t *value);
 
 /**
  * @brief Set ADC attribute
@@ -83,6 +85,6 @@ int adc_npm2100_attr_get(void *dev, enum npm2100_adc_chan chan, enum npm2100_adc
  * @return -ENOTSUP If the channel/attribute combination is invalid, or no such attribute
  * @return -errno In case of bus/conversion errors
  */
-int adc_npm2100_attr_set(void *dev, enum npm2100_adc_chan chan, enum npm2100_adc_attr attr, int32_t value);
+int adc_npm2100_attr_set(struct i2c_dev *dev, enum npm2100_adc_chan chan, enum npm2100_adc_attr attr, int32_t value);
 
 #endif /* ADC_NPM2100_H_*/

@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "i2c.h"
+
 /* nPM2100 voltage sources */
 enum npm2100_regulator_source {
 	NPM2100_SOURCE_BOOST,
@@ -50,7 +52,7 @@ enum npm2100_regulator_source {
  *
  * @return 0 If successful, -EINVAL If the voltage window is not valid, -errno In case of bus error
  */
-int regulator_npm2100_set_voltage(void *dev, enum npm2100_regulator_source source, int32_t min_uv,
+int regulator_npm2100_set_voltage(struct i2c_dev *dev, enum npm2100_regulator_source source, int32_t min_uv,
 				  int32_t max_uv);
 
 /**
@@ -62,7 +64,7 @@ int regulator_npm2100_set_voltage(void *dev, enum npm2100_regulator_source sourc
  *
  * @return 0 If successful, -errno In case of bus error
  */
-int regulator_npm2100_get_voltage(void *dev, enum npm2100_regulator_source source,
+int regulator_npm2100_get_voltage(struct i2c_dev *dev, enum npm2100_regulator_source source,
 				  int32_t *volt_uv);
 
 /**
@@ -73,7 +75,7 @@ int regulator_npm2100_get_voltage(void *dev, enum npm2100_regulator_source sourc
  *
  * @return 0 If successful, -errno In case of bus error
  */
-int regulator_npm2100_enable(void *dev, enum npm2100_regulator_source source);
+int regulator_npm2100_enable(struct i2c_dev *dev, enum npm2100_regulator_source source);
 
 /**
  * @brief Disable a regulator.
@@ -83,7 +85,7 @@ int regulator_npm2100_enable(void *dev, enum npm2100_regulator_source source);
  *
  * @return 0 If successful, -errno In case of bus error
  */
-int regulator_npm2100_disable(void *dev, enum npm2100_regulator_source source);
+int regulator_npm2100_disable(struct i2c_dev *dev, enum npm2100_regulator_source source);
 
 /**
  * @brief Enter ship mode.
@@ -95,7 +97,7 @@ int regulator_npm2100_disable(void *dev, enum npm2100_regulator_source source);
  *
  * @return 0 If successful, -errno In case of bus error
  */
-int regulator_npm2100_ship_mode(void *dev);
+int regulator_npm2100_ship_mode(struct i2c_dev *dev);
 
 /**
  * @brief Set pin control.
@@ -110,7 +112,7 @@ int regulator_npm2100_ship_mode(void *dev);
  *
  * @return 0 If successful, -errno In case of bus error
  */
-int regulator_npm2100_pin_ctrl(void *dev, enum npm2100_regulator_source source, uint8_t gpio_pin,
+int regulator_npm2100_pin_ctrl(struct i2c_dev *dev, enum npm2100_regulator_source source, uint8_t gpio_pin,
 			       bool active_low);
 
 /**
@@ -126,6 +128,6 @@ int regulator_npm2100_pin_ctrl(void *dev, enum npm2100_regulator_source source, 
  *
  * @return 0 If successful, -errno In case of bus error
  */
-int regulator_npm2100_set_mode(void *dev, enum npm2100_regulator_source source, uint16_t mode);
+int regulator_npm2100_set_mode(struct i2c_dev *dev, enum npm2100_regulator_source source, uint16_t mode);
 
 #endif /* REGULATOR_NPM2100_H_*/

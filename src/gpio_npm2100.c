@@ -17,7 +17,7 @@
 
 #define NPM2100_GPIO_PINS 2U
 
-int gpio_npm2100_set(void *dev, uint8_t pin, bool state)
+int gpio_npm2100_set(struct i2c_dev *dev, uint8_t pin, bool state)
 {
 	if (pin >= NPM2100_GPIO_PINS) {
 		return -EINVAL;
@@ -26,7 +26,7 @@ int gpio_npm2100_set(void *dev, uint8_t pin, bool state)
 	return i2c_reg_write_byte(dev, NPM2100_GPIO_OUTPUT + pin, state);
 }
 
-int gpio_npm2100_get(void *dev, uint8_t pin, bool *state)
+int gpio_npm2100_get(struct i2c_dev *dev, uint8_t pin, bool *state)
 {
 	uint8_t data;
 
@@ -44,7 +44,7 @@ int gpio_npm2100_get(void *dev, uint8_t pin, bool *state)
 	return 0;
 }
 
-int gpio_npm2100_config(void *dev, uint8_t pin, uint8_t mode, uint8_t flags)
+int gpio_npm2100_config(struct i2c_dev *dev, uint8_t pin, uint8_t mode, uint8_t flags)
 {
 	if (pin >= NPM2100_GPIO_PINS) {
 		return -EINVAL;

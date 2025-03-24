@@ -8,6 +8,8 @@
 
 #include <stdint.h>
 
+#include "i2c.h"
+
 /* nPM2100 watchdog mode enumeration */
 enum watchdog_npm2100_mode {
 	NPM2100_WATCHDOG_PIN_RESET = 1,   //!< Watchdog expiry generates a host reset on PG/RESET
@@ -20,7 +22,7 @@ enum watchdog_npm2100_mode {
  * @param dev device pointer, passed to i2c hal layer.
  * @return 0 If successful, -errno In case of any bus error
  */
-int watchdog_npm2100_disable(void *dev);
+int watchdog_npm2100_disable(struct i2c_dev *dev);
 
 /**
  * @brief Initialise watchdog
@@ -32,7 +34,7 @@ int watchdog_npm2100_disable(void *dev);
  * @param mode Watchdog expiry behaviour
  * @return 0 If successful, -EINVAL if time is out of range, -errno In case of any bus error
  */
-int watchdog_npm2100_init(void *dev, uint32_t timeout_ms, enum watchdog_npm2100_mode mode);
+int watchdog_npm2100_init(struct i2c_dev *dev, uint32_t timeout_ms, enum watchdog_npm2100_mode mode);
 
 /**
  * @brief Feed watchdog
@@ -40,6 +42,6 @@ int watchdog_npm2100_init(void *dev, uint32_t timeout_ms, enum watchdog_npm2100_
  * @param dev device pointer, passed to i2c hal layer.
  * @return 0 If successful, -errno In case of any bus error
  */
-int watchdog_npm2100_feed(void *dev);
+int watchdog_npm2100_feed(struct i2c_dev *dev);
 
 #endif /* GPIO_NPM2100_H_ */
