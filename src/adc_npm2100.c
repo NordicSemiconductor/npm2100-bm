@@ -59,7 +59,7 @@ static const struct linear_range vbat_range = LINEAR_RANGE_INIT(650000, 50000, 0
 static const struct linear_range oversampling_range = LINEAR_RANGE_INIT(0, 1, 0U, 4U);
 static const struct linear_range delay_range = LINEAR_RANGE_INIT(5000, 4000, 0U, 255U);
 
-int adc_npm2100_take_reading(void *dev, enum npm2100_adc_chan chan)
+int adc_npm2100_take_reading(struct i2c_dev *dev, enum npm2100_adc_chan chan)
 {
 	int ret;
 
@@ -85,7 +85,7 @@ int adc_npm2100_take_reading(void *dev, enum npm2100_adc_chan chan)
 	}
 }
 
-int adc_npm2100_get_result(void *dev, enum npm2100_adc_chan chan, int32_t *value)
+int adc_npm2100_get_result(struct i2c_dev *dev, enum npm2100_adc_chan chan, int32_t *value)
 {
 	uint8_t data;
 	int ret;
@@ -117,7 +117,7 @@ int adc_npm2100_get_result(void *dev, enum npm2100_adc_chan chan, int32_t *value
 	}
 }
 
-int adc_npm2100_attr_get(void *dev, enum npm2100_adc_chan chan, enum npm2100_adc_attr attr, int32_t *value)
+int adc_npm2100_attr_get(struct i2c_dev *dev, enum npm2100_adc_chan chan, enum npm2100_adc_attr attr, int32_t *value)
 {
 	uint8_t data;
 	int ret;
@@ -167,7 +167,7 @@ int adc_npm2100_attr_get(void *dev, enum npm2100_adc_chan chan, enum npm2100_adc
 	return -ENOTSUP;
 }
 
-int adc_npm2100_attr_set(void *dev, enum npm2100_adc_chan chan, enum npm2100_adc_attr attr, int32_t value)
+int adc_npm2100_attr_set(struct i2c_dev *dev, enum npm2100_adc_chan chan, enum npm2100_adc_attr attr, int32_t value)
 {
 	uint16_t data;
 	int ret;

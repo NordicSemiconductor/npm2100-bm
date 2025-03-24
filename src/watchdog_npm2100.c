@@ -22,12 +22,12 @@
 #define TIMER_CONFIG_WDRST  1U
 #define TIMER_CONFIG_WDPWRC 2U
 
-int watchdog_npm2100_disable(void *dev)
+int watchdog_npm2100_disable(struct i2c_dev *dev)
 {
 	return mfd_npm2100_stop_timer(dev);
 }
 
-int watchdog_npm2100_init(void *dev, uint32_t timeout_ms, enum watchdog_npm2100_mode mode)
+int watchdog_npm2100_init(struct i2c_dev *dev, uint32_t timeout_ms, enum watchdog_npm2100_mode mode)
 {
 	enum mfd_npm2100_timer_mode timer_mode;
 
@@ -50,7 +50,7 @@ int watchdog_npm2100_init(void *dev, uint32_t timeout_ms, enum watchdog_npm2100_
 	return mfd_npm2100_start_timer(dev);
 }
 
-int watchdog_npm2100_feed(void *dev)
+int watchdog_npm2100_feed(struct i2c_dev *dev)
 {
 	return i2c_reg_write_byte(dev, TIMER_TASKS_KICK, 1U);
 }

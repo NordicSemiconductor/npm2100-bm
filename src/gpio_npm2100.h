@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "i2c.h"
+
 /* nPM2100 GPIO modes */
 #define NPM2100_GPIO_MODE_GPIO     0x00U
 #define NPM2100_GPIO_MODE_IRQ_LOW  0x01U
@@ -37,7 +39,7 @@
  *
  * @return 0 If successful, -errno In case of error
  */
-int gpio_npm2100_config(void *dev, uint8_t pin, uint8_t mode, uint8_t flags);
+int gpio_npm2100_config(struct i2c_dev *dev, uint8_t pin, uint8_t mode, uint8_t flags);
 
 /**
  * @brief Set GPIO pin state.
@@ -50,7 +52,7 @@ int gpio_npm2100_config(void *dev, uint8_t pin, uint8_t mode, uint8_t flags);
  *
  * @return 0 If successful, -errno In case of error
  */
-int gpio_npm2100_set(void *dev, uint8_t pin, bool state);
+int gpio_npm2100_set(struct i2c_dev *dev, uint8_t pin, bool state);
 
 /**
  * @brief Set GPIO pin state.
@@ -63,6 +65,6 @@ int gpio_npm2100_set(void *dev, uint8_t pin, bool state);
  *
  * @return 0 If successful, -errno In case of error
  */
-int gpio_npm2100_get(void *dev, uint8_t pin, bool *state);
+int gpio_npm2100_get(struct i2c_dev *dev, uint8_t pin, bool *state);
 
 #endif /* GPIO_NPM2100_H_ */

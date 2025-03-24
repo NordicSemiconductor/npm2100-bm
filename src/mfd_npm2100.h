@@ -10,6 +10,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "i2c.h"
+
 enum mfd_npm2100_event_t {
 	NPM2100_EVENT_SYS_DIETEMP_WARN,
 	NPM2100_EVENT_SYS_SHIPHOLD_FALL,
@@ -80,7 +82,7 @@ struct mfd_npm2100_reset_config {
  * @param mode timer mode
  * @return 0 If successful, -EINVAL if time value is too large, -errno In case of any bus error
  */
-int mfd_npm2100_set_timer(void *dev, uint32_t time_ms, enum mfd_npm2100_timer_mode mode);
+int mfd_npm2100_set_timer(struct i2c_dev *dev, uint32_t time_ms, enum mfd_npm2100_timer_mode mode);
 
 /**
  * @brief Start npm2100 timer
@@ -88,7 +90,7 @@ int mfd_npm2100_set_timer(void *dev, uint32_t time_ms, enum mfd_npm2100_timer_mo
  * @param dev device pointer, passed to i2c hal layer.
  * @return 0 If successful, -errno In case of any bus error
  */
-int mfd_npm2100_start_timer(void *dev);
+int mfd_npm2100_start_timer(struct i2c_dev *dev);
 
 /**
  * @brief Stop npm2100 timer
@@ -96,7 +98,7 @@ int mfd_npm2100_start_timer(void *dev);
  * @param dev device pointer, passed to i2c hal layer.
  * @return 0 If successful, -errno In case of any bus error
  */
-int mfd_npm2100_stop_timer(void *dev);
+int mfd_npm2100_stop_timer(struct i2c_dev *dev);
 
 /**
  * @brief npm2100 full power reset
@@ -104,7 +106,7 @@ int mfd_npm2100_stop_timer(void *dev);
  * @param dev device pointer, passed to i2c hal layer.
  * @return 0 If successful, -errno In case of any bus error
  */
-int mfd_npm2100_reset(void *dev);
+int mfd_npm2100_reset(struct i2c_dev *dev);
 
 /**
  * @brief npm2100 hibernate
@@ -116,7 +118,7 @@ int mfd_npm2100_reset(void *dev);
  * @param pass_through set to use pass-through hibernate mode.
  * @return 0 If successful, -EINVAL if time value is too large, -errno In case of any bus error
  */
-int mfd_npm2100_hibernate(void *dev, uint32_t time_ms, bool pass_through);
+int mfd_npm2100_hibernate(struct i2c_dev *dev, uint32_t time_ms, bool pass_through);
 
 /**
  * @brief  Enable npm2100 event interrupt
@@ -125,7 +127,7 @@ int mfd_npm2100_hibernate(void *dev, uint32_t time_ms, bool pass_through);
  * @param events bitfield of events to enable (bits are defined by mfd_npm2100_event_t)
  * @return 0 on success, -errno on failure
  */
-int mfd_npm2100_enable_events(void *dev, uint32_t events);
+int mfd_npm2100_enable_events(struct i2c_dev *dev, uint32_t events);
 
 /**
  * @brief  Enable npm2100 event interrupt
@@ -134,7 +136,7 @@ int mfd_npm2100_enable_events(void *dev, uint32_t events);
  * @param events bitfield of events to disable (bits are defined by mfd_npm2100_event_t)
  * @return 0 on success, -errno on failure
  */
-int mfd_npm2100_disable_events(void *dev, uint32_t events);
+int mfd_npm2100_disable_events(struct i2c_dev *dev, uint32_t events);
 
 /**
  * @brief  Process npm2100 event interrupt
@@ -149,7 +151,7 @@ int mfd_npm2100_disable_events(void *dev, uint32_t events);
  * @param events bitfield of detected events (bits are defined by mfd_npm2100_event_t)
  * @return 0 on success, -errno on failure
  */
-int mfd_npm2100_process_events(void *dev, uint32_t *events);
+int mfd_npm2100_process_events(struct i2c_dev *dev, uint32_t *events);
 
 /**
  * @brief Configure npm2100 SHPHLD pin
@@ -158,7 +160,7 @@ int mfd_npm2100_process_events(void *dev, uint32_t *events);
  * @param config configuration options to be used.
  * @return 0 on success, -EINVAL If config is invalid, -errno In case of bus error
  */
-int mfd_npm2100_config_shphld(void *dev, const struct mfd_npm2100_shphld_config *config);
+int mfd_npm2100_config_shphld(struct i2c_dev *dev, const struct mfd_npm2100_shphld_config *config);
 
 /**
  * @brief Configure npm2100 reset behaviour
@@ -167,6 +169,6 @@ int mfd_npm2100_config_shphld(void *dev, const struct mfd_npm2100_shphld_config 
  * @param config configuration options to be used.
  * @return 0 on success, -errno In case of bus error
  */
-int mfd_npm2100_config_reset(void *dev, const struct mfd_npm2100_reset_config *config);
+int mfd_npm2100_config_reset(struct i2c_dev *dev, const struct mfd_npm2100_reset_config *config);
 
 #endif /* MFD_NPM2100_H_ */

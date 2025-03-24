@@ -70,7 +70,7 @@ static const struct linear_range vset1_ranges[] = {LINEAR_RANGE_INIT(3000000, 0,
 						   LINEAR_RANGE_INIT(2700000, 100000, 1U, 3U),
 						   LINEAR_RANGE_INIT(3100000, 100000, 4U, 6U)};
 
-int regulator_npm2100_set_voltage(void *dev, enum npm2100_regulator_source source, int32_t min_uv,
+int regulator_npm2100_set_voltage(struct i2c_dev *dev, enum npm2100_regulator_source source, int32_t min_uv,
 				  int32_t max_uv)
 {
 	uint16_t idx;
@@ -104,7 +104,7 @@ int regulator_npm2100_set_voltage(void *dev, enum npm2100_regulator_source sourc
 	}
 }
 
-int regulator_npm2100_get_voltage(void *dev, enum npm2100_regulator_source source, int32_t *volt_uv)
+int regulator_npm2100_get_voltage(struct i2c_dev *dev, enum npm2100_regulator_source source, int32_t *volt_uv)
 {
 	uint8_t idx;
 	int ret;
@@ -164,7 +164,7 @@ int regulator_npm2100_get_voltage(void *dev, enum npm2100_regulator_source sourc
 	}
 }
 
-static int set_boost_mode(void *dev, uint16_t mode)
+static int set_boost_mode(struct i2c_dev *dev, uint16_t mode)
 {
 	uint8_t reg;
 	int ret;
@@ -216,7 +216,7 @@ static int set_boost_mode(void *dev, uint16_t mode)
 	return i2c_reg_write_byte(dev, BOOST_PIN, reg);
 }
 
-static int set_ldosw_gpio_mode(void *dev, uint8_t inact, uint8_t act, uint8_t ldsw)
+static int set_ldosw_gpio_mode(struct i2c_dev *dev, uint8_t inact, uint8_t act, uint8_t ldsw)
 {
 	int ret;
 
@@ -229,7 +229,7 @@ static int set_ldosw_gpio_mode(void *dev, uint8_t inact, uint8_t act, uint8_t ld
 	return i2c_reg_write_byte(dev, LDOSW_SEL, LDOSW_SEL_OPER_PIN | ldsw);
 }
 
-static int set_ldosw_mode(void *dev, uint8_t mode)
+static int set_ldosw_mode(struct i2c_dev *dev, uint8_t mode)
 {
 	uint8_t ldsw = mode & NPM2100_REG_LDSW_EN;
 	uint8_t oper = mode & NPM2100_REG_OPER_MASK;
@@ -264,7 +264,7 @@ static int set_ldosw_mode(void *dev, uint8_t mode)
 	}
 }
 
-int regulator_npm2100_set_mode(void *dev, enum npm2100_regulator_source source, uint16_t mode)
+int regulator_npm2100_set_mode(struct i2c_dev *dev, enum npm2100_regulator_source source, uint16_t mode)
 {
 	switch (source) {
 	case NPM2100_SOURCE_BOOST:
@@ -276,7 +276,7 @@ int regulator_npm2100_set_mode(void *dev, enum npm2100_regulator_source source, 
 	}
 }
 
-int regulator_npm2100_enable(void *dev, enum npm2100_regulator_source source)
+int regulator_npm2100_enable(struct i2c_dev *dev, enum npm2100_regulator_source source)
 {
 	if (source != NPM2100_SOURCE_LDOSW) {
 		return 0;
@@ -285,7 +285,7 @@ int regulator_npm2100_enable(void *dev, enum npm2100_regulator_source source)
 	return i2c_reg_write_byte(dev, LDOSW_ENABLE, 1U);
 }
 
-int regulator_npm2100_disable(void *dev, enum npm2100_regulator_source source)
+int regulator_npm2100_disable(struct i2c_dev *dev, enum npm2100_regulator_source source)
 {
 	if (source != NPM2100_SOURCE_LDOSW) {
 		return 0;
@@ -294,7 +294,7 @@ int regulator_npm2100_disable(void *dev, enum npm2100_regulator_source source)
 	return i2c_reg_write_byte(dev, LDOSW_ENABLE, 0U);
 }
 
-int regulator_npm2100_pin_ctrl(void *dev, enum npm2100_regulator_source source, uint8_t gpio_pin,
+int regulator_npm2100_pin_ctrl(struct i2c_dev *dev, enum npm2100_regulator_source source, uint8_t gpio_pin,
 			       bool active_low)
 {
 	uint8_t pin = gpio_pin << 1U;
@@ -310,7 +310,7 @@ int regulator_npm2100_pin_ctrl(void *dev, enum npm2100_regulator_source source, 
 	}
 }
 
-int regulator_npm2100_ship_mode(void *dev)
+int regulator_npm2100_ship_mode(struct i2c_dev *dev)
 {
 	return i2c_reg_write_byte(dev, SHIP_TASK_SHIP, 1U);
 }
