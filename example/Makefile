@@ -17,7 +17,7 @@ $(OUTPUT_DIRECTORY)/nrf52840_xxaa.out: \
 # Project and nPM2100 drivers source files
 SRC_FILES += \
   $(PROJ_DIR)/main.c \
-  $(PROJ_DIR)/hal/i2c.c \
+  $(PROJ_DIR)/hal/i2c_nrf5sdk.c \
   $(NPM2100_DRIVERS_SRC)/adc_npm2100.c \
   $(NPM2100_DRIVERS_SRC)/gpio_npm2100.c \
   $(NPM2100_DRIVERS_SRC)/mfd_npm2100.c \

@@ -6,39 +6,41 @@
 #include <nrfx_twim.h>
 
 #include "i2c.h"
+#include "i2c_nrf5sdk.h"
 
-static const nrfx_twim_t twim = NRFX_TWIM_INSTANCE(0);
-static nrfx_twim_config_t twim_config = NRFX_TWIM_DEFAULT_CONFIG;
-
-int i2c_init(void *dev, uint8_t sda_pin, uint8_t scl_pin)
+int i2c_init(struct i2c_dev *dev, nrfx_twim_t *twim_inst, uint8_t sda_pin, uint8_t scl_pin)
 {
-	(void)dev;
-	twim_config.sda = sda_pin;
-	twim_config.scl = scl_pin;
+	struct i2c_ctx *ctx = (struct i2c_ctx *)dev->context;
 
-	nrfx_err_t err = nrfx_twim_init(&twim, &twim_config, NULL, NULL);
+	ctx->twim_config = (nrfx_twim_config_t)NRFX_TWIM_DEFAULT_CONFIG;
+	ctx->twim_config.sda = sda_pin;
+	ctx->twim_config.scl = scl_pin;
+	ctx->twim = *twim_inst;
+
+	nrfx_err_t err = nrfx_twim_init(&ctx->twim, &ctx->twim_config, NULL, NULL);
 	if (err != NRFX_SUCCESS) {
 		return -err;
 	}
 
-	nrfx_twim_enable(&twim);
+	nrfx_twim_enable(&ctx->twim);
 
 	return 0;
 }
 
-int i2c_write(void *dev, uint8_t *buf, size_t len)
+int i2c_write(struct i2c_dev *dev, uint8_t *buf, size_t len)
 {
-	struct i2c_dev *i2c = (struct i2c_dev *)dev;
+	nrfx_twim_t *twim = &((struct i2c_ctx *)dev->context)->twim;
+
 	nrfx_twim_xfer_desc_t write_desc = {
 		.type = NRFX_TWIM_XFER_TX,
-		.address = i2c->addr,
+		.address = dev->addr,
 		.primary_length = len,
 		.secondary_length = 0,
 		.p_primary_buf = buf,
 		.p_secondary_buf = NULL
 	};
 
-	nrfx_err_t err = nrfx_twim_xfer(&twim, &write_desc, 0U);
+	nrfx_err_t err = nrfx_twim_xfer(twim, &write_desc, 0U);
 	
 	if (err != NRFX_SUCCESS) {
 		return -err;
@@ -47,13 +49,14 @@ int i2c_write(void *dev, uint8_t *buf, size_t len)
 	return 0;
 }
 
-int i2c_read(void *dev, uint8_t reg, uint8_t *buf, size_t len)
+int i2c_read(struct i2c_dev *dev, uint8_t reg, uint8_t *buf, size_t len)
 {
-	struct i2c_dev *i2c = (struct i2c_dev *)dev;
+	nrfx_twim_t *twim = &((struct i2c_ctx *)dev->context)->twim;
+
 	// TX-RX transfer type is not supported in blocking mode
 	nrfx_twim_xfer_desc_t write_desc = {
 		.type = NRFX_TWIM_XFER_TX,
-		.address = i2c->addr,
+		.address = dev->addr,
 		.primary_length = 1,
 		.secondary_length = 0,
 		.p_primary_buf = &reg,
@@ -61,15 +64,15 @@ int i2c_read(void *dev, uint8_t reg, uint8_t *buf, size_t len)
 	};
 	nrfx_twim_xfer_desc_t read_desc = {
 		.type = NRFX_TWIM_XFER_RX,
-		.address = i2c->addr,
+		.address = dev->addr,
 		.primary_length = len,
 		.secondary_length = 0,
 		.p_primary_buf = buf,
 		.p_secondary_buf = NULL
 	};
 
-	nrfx_err_t err = nrfx_twim_xfer(&twim, &write_desc, 0U);
-	err = nrfx_twim_xfer(&twim, &read_desc, 0U);
+	nrfx_err_t err = nrfx_twim_xfer(twim, &write_desc, 0U);
+	err = nrfx_twim_xfer(twim, &read_desc, 0U);
 	
 	if (err != NRFX_SUCCESS) {
 		return -err;
@@ -78,17 +81,17 @@ int i2c_read(void *dev, uint8_t reg, uint8_t *buf, size_t len)
 	return 0;
 }
 
-int i2c_reg_write_byte(void *dev, uint8_t reg, uint8_t data)
+int i2c_reg_write_byte(struct i2c_dev *dev, uint8_t reg, uint8_t data)
 {
 	return i2c_write(dev, (uint8_t[]){reg, data}, 2U);
 }
 
-int i2c_reg_read_byte(void *dev, uint8_t reg, uint8_t *data)
+int i2c_reg_read_byte(struct i2c_dev *dev, uint8_t reg, uint8_t *data)
 {
 	return i2c_read(dev, reg, data, 1U);
 }
 
-int i2c_reg_update_byte(void *dev, uint8_t reg, uint8_t mask, uint8_t data)
+int i2c_reg_update_byte(struct i2c_dev *dev, uint8_t reg, uint8_t mask, uint8_t data)
 {
 	uint8_t byte;
 	int ret = i2c_reg_read_byte(dev, reg, &byte);
