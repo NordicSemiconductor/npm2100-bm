@@ -13,8 +13,8 @@
 #include "linear_range.h"
 #include "util.h"
 
-#define BOOST_VBATSEL  0x2EU
-#define BOOST_VBATMINH 0x30U
+#define BOOST_VBATMINLHSEL 0x2EU
+#define BOOST_VBATMINH     0x30U
 
 #define BOOST_VBATMINH_MASK    0x3FU
 #define BOOST_VBATMINHSEL_MASK 0x02U
@@ -223,7 +223,7 @@ int adc_npm2100_attr_set(struct i2c_dev *dev, enum npm2100_adc_chan chan, enum n
 			return ret;
 		}
 
-		return i2c_reg_update_byte(dev, BOOST_VBATMINH, BOOST_VBATMINHSEL_MASK, BOOST_VBATMINHSEL_MASK);
+		return i2c_reg_update_byte(dev, BOOST_VBATMINLHSEL, BOOST_VBATMINHSEL_MASK, BOOST_VBATMINHSEL_MASK);
 
 	case NPM2100_ADC_ATTR_OFFSET_SOURCE:
 		if (value != NPM2100_ADC_OFFSET_FACTORY && value != NPM2100_ADC_OFFSET_MEASURED) {
